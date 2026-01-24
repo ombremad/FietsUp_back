@@ -2,6 +2,8 @@ import NIOSSL
 import Fluent
 import FluentMySQLDriver
 import Vapor
+import Gatekeeper
+import VaporToOpenAPI
 
 // configures your application
 public func configure(_ app: Application) async throws {
@@ -15,9 +17,31 @@ public func configure(_ app: Application) async throws {
         password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
         database: Environment.get("DATABASE_NAME") ?? "vapor_database"
     ), as: .mysql)
+    
+    // Cors & Gatekeeper
+    
+    let corsConfiguration = CORSMiddleware.Configuration(
+        allowedOrigin: .none,
+        allowedMethods: [],
+        allowedHeaders: []
+    )
+    app.middleware.use(CORSMiddleware(configuration: corsConfiguration))
+    app.gatekeeper.config = .init(maxRequests: 60, per: .minute)
+    app.middleware.use(GatekeeperMiddleware())
+    
+    // Json strategies
+    
+    let encoder = JSONEncoder()
+    encoder.dateEncodingStrategy = .iso8601
+    ContentConfiguration.global.use(encoder: encoder, for: .json)
+    
+    let decoder = JSONDecoder()
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
+    decoder.dateDecodingStrategy = .iso8601
+    ContentConfiguration.global.use(decoder: decoder, for: .json)
+
+    // migrations and routes
 
     app.migrations.add(CreateTodo())
-
-    // register routes
     try routes(app)
 }

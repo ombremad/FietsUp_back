@@ -15,6 +15,12 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent-mysql-driver.git", from: "4.4.0"),
         // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
+        // Token generation for user authentication
+        .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0"),
+        // Rate limit requests
+        .package(url: "https://github.com/nodes-vapor/gatekeeper.git", from: "4.0.0"),
+        // Generate OpenApi (swagger) documentation
+        .package(url: "https://github.com/dankinsoid/VaporToOpenAPI.git", from: "4.8.1"),
     ],
     targets: [
         .executableTarget(
@@ -25,6 +31,9 @@ let package = Package(
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
+                .product(name: "JWT", package: "jwt"),
+                .product(name: "Gatekeeper", package: "gatekeeper"),
+                .product(name: "VaporToOpenAPI", package: "VaporToOpenAPI"),
             ],
             swiftSettings: swiftSettings
         ),
