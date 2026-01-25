@@ -18,7 +18,7 @@ public func configure(_ app: Application) async throws {
         database: Environment.get("DATABASE_NAME") ?? "vapor_database"
     ), as: .mysql)
     
-    // Cors & Gatekeeper
+    // Cors
     
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .none,
@@ -26,6 +26,9 @@ public func configure(_ app: Application) async throws {
         allowedHeaders: []
     )
     app.middleware.use(CORSMiddleware(configuration: corsConfiguration))
+    
+    // Gatekeeper
+    
     app.gatekeeper.config = .init(maxRequests: 60, per: .minute)
     app.middleware.use(GatekeeperMiddleware())
     
