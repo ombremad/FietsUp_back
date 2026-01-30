@@ -10,6 +10,7 @@ public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
+    // MySQL
     app.databases.use(DatabaseConfigurationFactory.mysql(
         hostname: Environment.get("DATABASE_HOST") ?? "localhost",
         port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? MySQLConfiguration.ianaPortNumber,
@@ -19,7 +20,6 @@ public func configure(_ app: Application) async throws {
     ), as: .mysql)
     
     // Cors
-    
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .none,
         allowedMethods: [],
@@ -28,23 +28,20 @@ public func configure(_ app: Application) async throws {
     app.middleware.use(CORSMiddleware(configuration: corsConfiguration))
     
     // Gatekeeper
-    
     app.gatekeeper.config = .init(maxRequests: 60, per: .minute)
+    app.gatekeeper.config = .init(maxRequests: 10, per: .second)
     app.middleware.use(GatekeeperMiddleware())
     
     // Json strategies
-    
     let encoder = JSONEncoder()
     encoder.dateEncodingStrategy = .iso8601
     ContentConfiguration.global.use(encoder: encoder, for: .json)
-    
     let decoder = JSONDecoder()
     decoder.keyDecodingStrategy = .convertFromSnakeCase
     decoder.dateDecodingStrategy = .iso8601
     ContentConfiguration.global.use(decoder: decoder, for: .json)
 
     // migrations and routes
-
     app.migrations.add(CreateTodo())
     try routes(app)
 }
