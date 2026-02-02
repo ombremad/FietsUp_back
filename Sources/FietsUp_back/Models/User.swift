@@ -17,9 +17,9 @@ final class User: Model, @unchecked Sendable {
     @Field(key: "bio") var bio: String?
     @Field(key: "streak") var streak: Int
     
-    @Parent(key: "id_cycle_type") var cycleType: CycleType
-    @Parent(key: "id_cycle_color") var cycleColor: CycleColor
-    @Parent(key: "id_cycle_decoration") var cycleDecoration: CycleDecoration
+    @OptionalParent(key: "id_cycle_type") var cycleType: CycleType?
+    @OptionalParent(key: "id_cycle_color") var cycleColor: CycleColor?
+    @OptionalParent(key: "id_cycle_decoration") var cycleDecoration: CycleDecoration?
     
     @Children(for: \.$user) var activities: [Activity]
     @Children(for: \.$user) var dangerComments: [DangerComment]

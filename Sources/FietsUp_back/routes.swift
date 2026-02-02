@@ -10,7 +10,7 @@ func routes(_ app: Application) throws {
     }
     .excludeFromOpenAPI()
     
-    // generate OpenAPI documentation
+    // OpenAPI documentation
     app.get("swagger", "swagger.json") { req in
         req.application.routes.openAPI(
             info: InfoObject(
@@ -23,5 +23,5 @@ func routes(_ app: Application) throws {
     .excludeFromOpenAPI()
     
     // controllers registration
-    try app.register(collection: TodoController())
+    try app.register(collection: UserController())
 }
