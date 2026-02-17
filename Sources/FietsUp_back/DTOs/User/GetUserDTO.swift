@@ -17,3 +17,17 @@ struct GetUserDTO: Content {
     var bio: String?
     var streak: Int
 }
+
+extension GetUserDTO {
+    init(from model: User) throws {
+        self.init(
+            id: model.id!,
+            firstName: model.firstName,
+            lastName: model.lastName,
+            nickname: model.nickname,
+            email: model.email,
+            bio: model.bio,
+            streak: model.streak,
+        )
+    }
+}

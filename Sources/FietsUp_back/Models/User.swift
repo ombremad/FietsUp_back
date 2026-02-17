@@ -1,5 +1,6 @@
+import Vapor
 import Fluent
-import struct Foundation.UUID
+import JWT
 
 final class User: Model, @unchecked Sendable {
     static let schema = "users"
@@ -45,4 +46,23 @@ final class User: Model, @unchecked Sendable {
     @Siblings(through: ForumPostLike.self, from: \.$user, to: \.$forumPost) var forumPostLikes: [ForumPost]
 
     init() { }
+    
+    convenience init(from dto: CreateUserDTO) throws {
+        self.init()
+        self.id = UUID()
+        
+        // user provided
+        self.firstName = dto.firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.lastName = dto.lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.nickname = dto.nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.email = dto.email.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.password = try Bcrypt.hash(dto.password)
+        self.bio = dto.bio
+        
+        // defaults
+        self.creationDate = .now
+        self.banEndDate = nil
+        self.adminRights = 0
+        self.streak = 0
+    }
 }
