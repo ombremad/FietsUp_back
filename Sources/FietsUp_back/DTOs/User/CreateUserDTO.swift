@@ -19,7 +19,6 @@ struct CreateUserDTO: Content {
 
 extension CreateUserDTO: Validatable {
     static func validations(_ validations: inout Validations) {
-        
         validations.add(
             "firstName", as: String.self,
             is: .count(1...50)

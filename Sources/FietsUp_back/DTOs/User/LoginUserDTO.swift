@@ -15,7 +15,6 @@ struct LoginUserDTO: Content {
 
 extension LoginUserDTO: Validatable {
     static func validations(_ validations: inout Validations) {
-        
         validations.add(
             "email", as: String.self,
             is: .email

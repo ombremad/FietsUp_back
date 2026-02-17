@@ -11,10 +11,16 @@ import JWT
 
 struct UserController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
-        let users = routes.grouped("users")
-        let protected = users.grouped(JWTMiddleware()).groupedOpenAPI(auth: .bearer())
         
-        users.post("signup", use: self.create)
+        let request = routes.grouped("users")
+        let userProtected = request
+            .grouped(JWTMiddleware())
+            .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
+        let adminProtected = request
+            .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
+            .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
+
+        request.post("signup", use: self.create)
             .openAPI(
                 summary: "Create user",
                 description: "Create a new user",
@@ -23,7 +29,7 @@ struct UserController: RouteCollection {
             )
             .openAPINoAuth()
         
-        users.post("login", use: self.login)
+        request.post("login", use: self.login)
             .openAPI(
                 summary: "Login user",
                 description: "Log an existing user in",
@@ -32,7 +38,12 @@ struct UserController: RouteCollection {
             )
             .openAPINoAuth()
         
-        protected.get("test", use: self.test)
+        adminProtected.get(use: self.get)
+            .openAPI(
+                summary: "List all users",
+                description: "List all existing users",
+                response: .type([GetUserDTO].self)
+            )
     }
     
     @Sendable
@@ -69,7 +80,18 @@ struct UserController: RouteCollection {
     }
     
     @Sendable
-    func test(req: Request) async throws -> String {
-        return "It works lol"
+    func get(req: Request) async throws -> [GetUserDTO] {
+        let payload = try req.auth.require(UserPayload.self)
+        guard let user = try await User.find(payload.id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        guard user.adminRights >= 2 else {
+            throw Abort(.forbidden)
+        }
+
+        return try await User.query(on: req.db)
+            .sort(\.$email)
+            .all()
+            .map { try UserMapper.toDTO(from: $0) }
     }
 }

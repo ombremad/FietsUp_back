@@ -18,7 +18,7 @@ public func configure(_ app: Application) async throws {
         password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
         database: Environment.get("DATABASE_NAME") ?? "vapor_database"
     ), as: .mysql)
-    
+        
     // Cors
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .none,
