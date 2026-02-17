@@ -6,10 +6,15 @@
 //
 
 import Vapor
+import JWT
 
 struct JWTConfig {
     static let shared = JWTConfig()
     
-    // Get JWT secret key from schemes if available
     let jwtSecret = Environment.get("JWT_SECRET") ?? "mysecretkey"
+    
+    func sign(_ payload: UserPayload) throws -> String {
+        let signer = JWTSigner.hs256(key: jwtSecret)
+        return try signer.sign(payload)
+    }
 }

@@ -14,10 +14,10 @@ struct RequireAdminLevelMiddleware: AsyncMiddleware {
         let payload = try request.auth.require(UserPayload.self)
         
         guard let user = try await User.find(payload.id, on: request.db) else {
-            throw Abort(.notFound)
+            throw Abort(.notFound, reason: "User not found")
         }
         guard user.adminRights >= minimumLevel else {
-            throw Abort(.forbidden)
+            throw Abort(.forbidden, reason: "Insufficient privileges")
         }
         
         request.storage[ResolvedUserKey.self] = user
