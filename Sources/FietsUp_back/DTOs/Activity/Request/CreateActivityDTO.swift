@@ -5,8 +5,8 @@
 //  Created by Anne Ferret on 24/03/2026.
 //
 
-import Vapor
 import Fluent
+import Vapor
 
 struct CreateActivityDTO: Content {
   var startDate: Date

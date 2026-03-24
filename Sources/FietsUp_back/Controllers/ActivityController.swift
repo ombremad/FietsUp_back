@@ -10,12 +10,13 @@ import Vapor
 
 struct ActivityController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
-    
+
     let request = routes.grouped("activities")
-    let userProtected = request
+    let userProtected =
+      request
       .grouped(JWTMiddleware())
       .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
-    
+
     userProtected.post(use: self.create)
       .openAPI(
         summary: "Create a new activity",
@@ -36,14 +37,14 @@ struct ActivityController: RouteCollection {
         response: .type(HTTPStatus.self),
       )
   }
-  
+
   @Sendable
   func create(req: Request) async throws -> GetActivityDTO {
     let payload = try req.auth.require(UserPayload.self)
     guard let user = try await User.find(payload.id, on: req.db) else {
       throw Abort(.notFound, reason: "User not found")
     }
-    
+
     let dto = try req.content.decode(CreateActivityDTO.self)
     guard dto.endDate > dto.startDate else {
       throw Abort(.badRequest, reason: "endDate must be after startDate")
@@ -55,7 +56,7 @@ struct ActivityController: RouteCollection {
     try await activity.save(on: req.db)
     return try GetActivityDTO(from: activity)
   }
-  
+
   @Sendable
   func getAllForUser(req: Request) async throws -> [GetActivityDTO] {
     let payload = try req.auth.require(UserPayload.self)
@@ -67,12 +68,12 @@ struct ActivityController: RouteCollection {
       .filter(\.$user.$id == user.id!)
       .sort(\.$endDate, .descending)
       .all()
-    
+
     return try activities.map { activity in
       try GetActivityDTO(from: activity)
     }
   }
-  
+
   @Sendable
   func delete(req: Request) async throws -> HTTPStatus {
     let payload = try req.auth.require(UserPayload.self)
@@ -89,6 +90,6 @@ struct ActivityController: RouteCollection {
       return .noContent
     }
   }
-  
+
   // TODO: continue here
 }
