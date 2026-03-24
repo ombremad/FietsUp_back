@@ -5,7 +5,6 @@
 //  Created by Anne Ferret on 02/02/2026.
 //
 
-import Fluent
 import Vapor
 
 struct CreateUserDTO: Content {

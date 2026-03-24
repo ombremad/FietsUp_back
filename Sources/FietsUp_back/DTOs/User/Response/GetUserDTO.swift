@@ -5,7 +5,6 @@
 //  Created by Anne Ferret on 02/02/2026.
 //
 
-import Fluent
 import Vapor
 
 struct GetUserDTO: Content {
@@ -20,8 +19,10 @@ struct GetUserDTO: Content {
 
 extension GetUserDTO {
   init(from model: User) throws {
+    guard let id = model.id else { throw Abort(.internalServerError) }
+
     self.init(
-      id: model.id!,
+      id: id,
       firstName: model.firstName,
       lastName: model.lastName,
       nickname: model.nickname,

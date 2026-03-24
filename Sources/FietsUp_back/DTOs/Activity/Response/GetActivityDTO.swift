@@ -5,7 +5,6 @@
 //  Created by Anne Ferret on 24/03/2026.
 //
 
-import Fluent
 import Vapor
 
 struct GetActivityDTO: Content {
@@ -18,8 +17,10 @@ struct GetActivityDTO: Content {
 
 extension GetActivityDTO {
   init(from model: Activity) throws {
+    guard let id = model.id else { throw Abort(.internalServerError) }
+    
     self.init(
-      id: model.id!,
+      id: id,
       startDate: model.startDate,
       endDate: model.endDate,
       length: model.length,

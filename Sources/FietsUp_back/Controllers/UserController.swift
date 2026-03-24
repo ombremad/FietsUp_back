@@ -128,8 +128,8 @@ struct UserController: RouteCollection {
       throw Abort(.unauthorized, reason: "Incorrect login. Check your email and password.")
     }
 
-    guard let userId = user.id else { throw Abort(.internalServerError) }
-    let token = try JWTConfig.shared.sign(UserPayload(id: userId))
+    let userID = try user.requireID()
+    let token = try JWTConfig.shared.sign(UserPayload(id: userID))
     return GetTokenDTO(token)
   }
 
@@ -150,8 +150,7 @@ struct UserController: RouteCollection {
 
   @Sendable
   func getMe(req: Request) async throws -> GetUserDTO {
-    let payload = try req.auth.require(UserPayload.self)
-    let user = try await findUser(id: payload.id, on: req.db)
+    let user = try await req.requireUser()
     return try GetUserDTO(from: user)
   }
 
@@ -164,8 +163,7 @@ struct UserController: RouteCollection {
 
   @Sendable
   func patchMe(req: Request) async throws -> GetUserDTO {
-    let payload = try req.auth.require(UserPayload.self)
-    let user = try await findUser(id: payload.id, on: req.db)
+    let user = try await req.requireUser()
     return try await patchUser(user, req: req)
   }
 
@@ -178,15 +176,13 @@ struct UserController: RouteCollection {
 
   @Sendable
   func deleteMe(req: Request) async throws -> HTTPStatus {
-    let payload = try req.auth.require(UserPayload.self)
-    let user = try await findUser(id: payload.id, on: req.db)
+    let user = try await req.requireUser()
     return try await deleteUser(user, on: req.db)
   }
 
   @Sendable
   func deleteMyBio(req: Request) async throws -> GetUserDTO {
-    let payload = try req.auth.require(UserPayload.self)
-    let user = try await findUser(id: payload.id, on: req.db)
+    let user = try await req.requireUser()
     user.bio = nil
     try await user.save(on: req.db)
     return try GetUserDTO(from: user)

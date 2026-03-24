@@ -16,13 +16,12 @@ final class Activity: Model, @unchecked Sendable {
 
   init() {}
 
-  convenience init(from dto: CreateActivityDTO, user: User) throws {
+  convenience init(from dto: CreateActivityDTO, userID: UUID) {
     self.init()
 
     // computed
-    self.id = UUID()
     self.length = Int(dto.endDate.timeIntervalSince(dto.startDate) / 60)
-    self.$user.id = user.id!
+    self.$user.id = userID
 
     // user provided
     self.startDate = dto.startDate
