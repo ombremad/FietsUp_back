@@ -39,4 +39,5 @@ func routes(_ app: Application) throws {
     
     // controllers registration
     try app.register(collection: UserController())
+  try app.register(collection: ActivityController())
 }

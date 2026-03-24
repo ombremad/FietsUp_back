@@ -14,4 +14,18 @@ final class Activity: Model, @unchecked Sendable {
     @Parent(key: "id_user") var user: User
 
     init() { }
+  
+  convenience init(from dto: CreateActivityDTO, user: User) throws {
+    self.init()
+    
+    // computed
+    self.id = UUID()
+    self.length = Int(dto.endDate.timeIntervalSince(dto.startDate) / 60)
+    self.$user.id = user.id!
+
+    // user provided
+    self.startDate = dto.startDate
+    self.endDate = dto.endDate
+    self.distance = dto.distance
+  }
 }
