@@ -18,30 +18,11 @@ struct CreateUserDTO: Content {
 
 extension CreateUserDTO: Validatable {
   static func validations(_ validations: inout Validations) {
-    validations.add(
-      "firstName", as: String.self,
-      is: .count(1...50)
-    )
-    validations.add(
-      "lastName", as: String.self,
-      is: .count(1...50)
-    )
-    validations.add(
-      "nickname", as: String.self,
-      is: .count(1...50) && .alphanumeric
-    )
-    validations.add(
-      "email", as: String.self,
-      is: .email
-    )
-    validations.add(
-      "password", as: String.self,
-      is: .securePassword
-    )
-    validations.add(
-      "bio", as: String?.self,
-      is: .nil || .count(1...500),
-      required: false
-    )
+    validations.add("firstName", as: String.self, is: .count(1...50))
+    validations.add("lastName", as: String.self, is: .count(1...50))
+    validations.add("nickname", as: String.self, is: .count(1...50) && .ascii)
+    validations.add("email", as: String.self, is: .count(1...100) && .internationalEmail)
+    validations.add("password", as: String.self, is: .securePassword)
+    validations.add("bio", as: String.self, is: .count(1...500), required: false)
   }
 }

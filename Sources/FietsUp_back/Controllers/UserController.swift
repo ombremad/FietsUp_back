@@ -23,7 +23,8 @@ struct UserController: RouteCollection {
 
     request.post("signup", use: self.create)
       .openAPI(
-        summary: "Create user",
+        tags: "Users", "auth",
+        summary: "Signup",
         description: "Create a new user",
         body: .type(CreateUserDTO.self),
         response: .type(GetUserDTO.self)
@@ -32,7 +33,8 @@ struct UserController: RouteCollection {
 
     request.post("login", use: self.login)
       .openAPI(
-        summary: "Login user",
+        tags: "Users", "auth",
+        summary: "Login",
         description: "Log an existing user in",
         body: .type(LoginUserDTO.self),
         response: .type(GetTokenDTO.self)
@@ -41,31 +43,35 @@ struct UserController: RouteCollection {
 
     adminProtected.get(use: self.getAll)
       .openAPI(
-        summary: "List all users",
+        tags: "Users",
+        summary: "List",
         description: "List all existing users",
         response: .type([GetUserDTO].self)
       )
 
-    adminProtected.get(":userId", use: self.getById)
+    adminProtected.get(":id", use: self.getById)
       .openAPI(
-        summary: "Find one user",
+        tags: "Users",
+        summary: "Find",
         description: "Find an existing user by id",
         path: .type(UUID.self),
         response: .type(GetUserDTO.self)
       )
 
-    adminProtected.patch(":userId", use: self.patchById)
+    adminProtected.patch(":id", use: self.patchById)
       .openAPI(
-        summary: "Patch one user",
+        tags: "Users",
+        summary: "Patch",
         description: "Find and patch an existing user by id",
         path: .type(UUID.self),
         body: .type(PatchUserDTO.self),
         response: .type(GetUserDTO.self)
       )
 
-    adminProtected.delete(":userId", use: self.deleteById)
+    adminProtected.delete(":id", use: self.deleteById)
       .openAPI(
-        summary: "Delete one user",
+        tags: "Users",
+        summary: "Delete",
         description: "Permanently delete an existing user by id",
         path: .type(UUID.self),
         response: .type(HTTPStatus.self)
@@ -73,6 +79,7 @@ struct UserController: RouteCollection {
 
     userProtected.get("me", use: self.getMe)
       .openAPI(
+        tags: "Users", "me",
         summary: "Get me",
         description: "Get current user",
         response: .type(GetUserDTO.self)
@@ -80,6 +87,7 @@ struct UserController: RouteCollection {
 
     userProtected.patch("me", use: self.patchMe)
       .openAPI(
+        tags: "Users", "me",
         summary: "Patch me",
         description: "Patch current user",
         body: .type(PatchUserDTO.self),
@@ -88,25 +96,19 @@ struct UserController: RouteCollection {
 
     userProtected.delete("me", use: self.deleteMe)
       .openAPI(
+        tags: "Users", "me",
         summary: "Delete me",
         description: "Permanently delete current user",
         response: .type(HTTPStatus.self)
-      )
-
-    userProtected.delete("me/bio", use: self.deleteMyBio)
-      .openAPI(
-        summary: "Delete my bio",
-        description: "Permanently delete current user's public biography",
-        response: .type(GetUserDTO.self)
       )
   }
 
   @Sendable
   func create(req: Request) async throws -> GetUserDTO {
     try CreateUserDTO.validate(content: req)
-    let userDTO = try req.content.decode(CreateUserDTO.self)
+    let dto = try req.content.decode(CreateUserDTO.self)
 
-    let user = try User(from: userDTO)
+    let user = try User(from: dto)
     try await user.save(on: req.db)
     return try GetUserDTO(from: user)
   }
@@ -143,7 +145,7 @@ struct UserController: RouteCollection {
 
   @Sendable
   func getById(req: Request) async throws -> GetUserDTO {
-    let userId = try req.parameters.require("userId", as: UUID.self)
+    let userId = try req.parameters.require("id", as: UUID.self)
     let user = try await findUser(id: userId, on: req.db)
     return try GetUserDTO(from: user)
   }
@@ -156,7 +158,7 @@ struct UserController: RouteCollection {
 
   @Sendable
   func patchById(req: Request) async throws -> GetUserDTO {
-    let userId = try req.parameters.require("userId", as: UUID.self)
+    let userId = try req.parameters.require("id", as: UUID.self)
     let user = try await findUser(id: userId, on: req.db)
     return try await patchUser(user, req: req)
   }
@@ -169,7 +171,7 @@ struct UserController: RouteCollection {
 
   @Sendable
   func deleteById(req: Request) async throws -> HTTPStatus {
-    let userId = try req.parameters.require("userId", as: UUID.self)
+    let userId = try req.parameters.require("id", as: UUID.self)
     let user = try await findUser(id: userId, on: req.db)
     return try await deleteUser(user, on: req.db)
   }
@@ -178,14 +180,6 @@ struct UserController: RouteCollection {
   func deleteMe(req: Request) async throws -> HTTPStatus {
     let user = try await req.requireUser()
     return try await deleteUser(user, on: req.db)
-  }
-
-  @Sendable
-  func deleteMyBio(req: Request) async throws -> GetUserDTO {
-    let user = try await req.requireUser()
-    user.bio = nil
-    try await user.save(on: req.db)
-    return try GetUserDTO(from: user)
   }
 
   private func findUser(id: UUID, on db: any Database) async throws -> User {
@@ -201,8 +195,8 @@ struct UserController: RouteCollection {
 
   private func patchUser(_ user: User, req: Request) async throws -> GetUserDTO {
     try PatchUserDTO.validate(content: req)
-    let patchDTO = try req.content.decode(PatchUserDTO.self)
-    user.apply(patchDTO)
+    let dto = try req.content.decode(PatchUserDTO.self)
+    user.patch(with: dto)
     try await user.save(on: req.db)
     return try GetUserDTO(from: user)
   }

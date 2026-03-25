@@ -44,6 +44,5 @@ public func configure(_ app: Application) async throws {
   ContentConfiguration.global.use(decoder: decoder, for: .json)
 
   // migrations and routes
-  app.migrations.add(CreateTodo())
   try routes(app)
 }

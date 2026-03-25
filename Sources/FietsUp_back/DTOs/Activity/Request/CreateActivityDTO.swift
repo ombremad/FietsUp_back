@@ -15,9 +15,6 @@ struct CreateActivityDTO: Content {
 
 extension CreateActivityDTO: Validatable {
   static func validations(_ validations: inout Validations) {
-    validations.add(
-      "distance", as: Int.self,
-      is: .range(1...720000)
-    )
+    validations.add("distance", as: Int.self, is: .range(1...720000))
   }
 }

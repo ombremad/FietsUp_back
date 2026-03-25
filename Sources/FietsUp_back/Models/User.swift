@@ -77,3 +77,18 @@ final class User: Model, @unchecked Sendable {
     self.streak = 0
   }
 }
+
+extension User {
+  func patch(with dto: PatchUserDTO) {
+    if let firstName = dto.firstName {
+      self.firstName = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let lastName = dto.lastName {
+      self.lastName = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let nickname = dto.nickname {
+      self.nickname = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let bio = dto.bio { self.bio = bio }
+  }
+}

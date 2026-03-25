@@ -11,45 +11,25 @@ struct PatchUserDTO: Content {
   var firstName: String?
   var lastName: String?
   var nickname: String?
-  var bio: String?
+  var bio: String??
+}
+
+// Make ?? variables nullable in the patch
+extension PatchUserDTO {
+  init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    firstName = try container.decodeIfPresent(String.self, forKey: .firstName)
+    lastName = try container.decodeIfPresent(String.self, forKey: .lastName)
+    nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
+    bio = try container.decodeNullablePatchVariable(String.self, forKey: .bio)
+  }
 }
 
 extension PatchUserDTO: Validatable {
   static func validations(_ validations: inout Validations) {
-    validations.add(
-      "firstName", as: String.self,
-      is: .count(1...50),
-      required: false
-    )
-    validations.add(
-      "lastName", as: String.self,
-      is: .count(1...50),
-      required: false
-    )
-    validations.add(
-      "nickname", as: String.self,
-      is: .count(1...50) && .alphanumeric,
-      required: false
-    )
-    validations.add(
-      "bio", as: String?.self,
-      is: .nil || .count(1...500),
-      required: false
-    )
-  }
-}
-
-extension User {
-  func apply(_ dto: PatchUserDTO) {
-    if let firstName = dto.firstName {
-      self.firstName = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    if let lastName = dto.lastName {
-      self.lastName = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    if let nickname = dto.nickname {
-      self.nickname = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    if let bio = dto.bio { self.bio = bio }
+    validations.add("firstName", as: String.self, is: .count(1...50), required: false)
+    validations.add("lastName", as: String.self, is: .count(1...50), required: false)
+    validations.add("nickname", as: String.self, is: .count(1...50) && .ascii, required: false)
+    validations.add("bio", as: String.self, is: .count(1...500), required: false)
   }
 }
