@@ -15,4 +15,17 @@ final class ModerationCategory: Model, @unchecked Sendable {
   @Children(for: \.$moderationCategory) var forumPostReports: [ForumPostReport]
 
   init() {}
+  
+  convenience init(from dto: CreateModerationCategoryDTO) {
+    self.init()
+    
+    // user provided
+    self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+}
+
+extension ModerationCategory {
+  func patch(with dto: PatchModerationCategoryDTO) {
+    if let name = dto.name { self.name = name.trimmingCharacters(in: .whitespacesAndNewlines) }
+  }
 }
