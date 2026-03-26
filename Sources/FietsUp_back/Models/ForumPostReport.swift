@@ -7,8 +7,8 @@ final class ForumPostReport: Model, @unchecked Sendable {
 
   @ID(key: .id) var id: UUID?
 
-  @Field(key: "description") var description: String
-  @Field(key: "process_description") var processDescription: String?
+  @Field(key: "details") var details: String
+  @Field(key: "process_details") var processDetails: String?
   @Field(key: "creation_date") var creationDate: Date
   @Field(key: "process_date") var processDate: Date?
 
