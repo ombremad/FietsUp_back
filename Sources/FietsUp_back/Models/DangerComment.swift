@@ -3,7 +3,7 @@ import Fluent
 import struct Foundation.UUID
 
 final class DangerComment: Model, @unchecked Sendable {
-  static let schema = "danger_comment"
+  static let schema = "danger_comments"
 
   @ID(key: .id) var id: UUID?
 

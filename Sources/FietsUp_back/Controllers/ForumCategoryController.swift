@@ -13,9 +13,9 @@ struct ForumCategoryController: RouteCollection {
     
     let request = routes.grouped("forum", "categories")
     let adminProtected =
-    request
-      .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
-      .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
+      request
+        .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
+        .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
     adminProtected.post(use: self.create)
       .openAPI(

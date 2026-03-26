@@ -46,12 +46,25 @@ func routes(_ app: Application) throws {
   }
   .excludeFromOpenAPI()
 
-  // controllers registration
+  // CONTROLLERS
+  // feature: users management
   try app.register(collection: UserController())
+  
+  // feature: activities
   try app.register(collection: ActivityController())
-  try app.register(collection: ForumCategoryController())
+  
+  // feature: dangers
+  try app.register(collection: DangerPostController())
+  try app.register(collection: DangerCategoryController())
+  
+  // feature: forum
   try app.register(collection: ForumPostController())
+  try app.register(collection: ForumCategoryController())
+  
+  // feature: moderation & reports
   try app.register(collection: ModerationCategoryController())
+  
+  // feature: places
   try app.register(collection: PlaceController())
   try app.register(collection: PlaceCategoryController())
 }
