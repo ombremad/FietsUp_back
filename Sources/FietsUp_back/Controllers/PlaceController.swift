@@ -27,7 +27,7 @@ struct PlaceController: RouteCollection {
         summary: "Create",
         description: "Create a place",
         body: .type(CreatePlaceDTO.self),
-        response: .type(CreatePlaceDTO.self)
+        response: .type(GetPlaceDTO.self)
       )
     
     adminProtected.get(use: self.getAll)

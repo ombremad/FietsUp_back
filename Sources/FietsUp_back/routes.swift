@@ -26,6 +26,13 @@ func routes(_ app: Application) throws {
               scheme: "bearer",
               bearerFormat: "JWT"
             )),
+          "ModBearer": .value(
+            SecuritySchemeObject(
+              type: .http,
+              description: "Requires a level of adminRights >= 1",
+              scheme: "bearer",
+              bearerFormat: "JWT"
+            )),
           "AdminBearer": .value(
             SecuritySchemeObject(
               type: .http,
@@ -43,6 +50,7 @@ func routes(_ app: Application) throws {
   try app.register(collection: UserController())
   try app.register(collection: ActivityController())
   try app.register(collection: ForumCategoryController())
+  try app.register(collection: ForumPostController())
   try app.register(collection: ModerationCategoryController())
   try app.register(collection: PlaceController())
   try app.register(collection: PlaceCategoryController())
