@@ -8,14 +8,14 @@ final class Place: Model, @unchecked Sendable {
   @ID(key: .id) var id: UUID?
 
   @Field(key: "name") var name: String
-  @Field(key: "address") var address: String?
-  @Field(key: "zip_code") var zipCode: String?
-  @Field(key: "city") var city: String?
-  @Field(key: "country") var country: String?
-  @Field(key: "phone_number") var phoneNumber: String?
-  @Field(key: "email") var email: String?
-  @Field(key: "website") var website: String?
-  @Field(key: "other_details") var otherDetails: String?
+  @OptionalField(key: "address") var address: String?
+  @OptionalField(key: "zip_code") var zipCode: String?
+  @OptionalField(key: "city") var city: String?
+  @OptionalField(key: "country") var country: String?
+  @OptionalField(key: "phone_number") var phoneNumber: String?
+  @OptionalField(key: "email") var email: String?
+  @OptionalField(key: "website") var website: String?
+  @OptionalField(key: "other_details") var otherDetails: String?
   @Field(key: "latitude") var latitude: Double
   @Field(key: "longitude") var longitude: Double
   @Timestamp(key: "creation_date", on: .create) var creationDate: Date?

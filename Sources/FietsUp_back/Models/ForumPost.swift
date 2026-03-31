@@ -9,7 +9,7 @@ final class ForumPost: Model, @unchecked Sendable {
 
   @Field(key: "title") var title: String
   @Field(key: "content") var content: String
-  @Field(key: "last_activity_date") var lastActivityDate: Date?
+  @OptionalField(key: "last_activity_date") var lastActivityDate: Date?
 
   @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
 

@@ -13,9 +13,9 @@ final class User: Model, @unchecked Sendable {
   @Field(key: "email") var email: String
   @Field(key: "password") var password: String
   @Field(key: "creation_date") var creationDate: Date
-  @Field(key: "ban_end_date") var banEndDate: Date?
+  @OptionalField(key: "ban_end_date") var banEndDate: Date?
   @Field(key: "admin_rights") var adminRights: Int
-  @Field(key: "bio") var bio: String?
+  @OptionalField(key: "bio") var bio: String?
   @Field(key: "streak") var streak: Int
 
   @OptionalParent(key: "id_cycle_type") var cycleType: CycleType?
