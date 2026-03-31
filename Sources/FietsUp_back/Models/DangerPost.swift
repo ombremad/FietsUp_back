@@ -9,9 +9,11 @@ final class DangerPost: Model, @unchecked Sendable {
 
   @Field(key: "title") var title: String
   @Field(key: "content") var content: String
-  @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
   @Field(key: "latitude") var latitude: Double
   @Field(key: "longitude") var longitude: Double
+  @Field(key: "last_activity_date") var lastActivityDate: Date?
+
+  @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
 
   @Parent(key: "id_user") var user: User
   @Parent(key: "id_danger_category") var dangerCategory: DangerCategory

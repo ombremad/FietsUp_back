@@ -114,6 +114,11 @@ struct DangerPostController: RouteCollection {
     guard let post = try await query.first() else {
       throw Abort(.notFound)
     }
+    
+    post.$dangerComments.value = post.$dangerComments.value?
+      .filter { $0.creationDate != nil }
+      .sorted { $0.creationDate! < $1.creationDate! }
+    
     return post
   }
 

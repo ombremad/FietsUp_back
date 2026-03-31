@@ -6,9 +6,9 @@ final class ForumCategory: Model, @unchecked Sendable {
   static let schema = "forum_categories"
 
   @ID(key: .id) var id: UUID?
-
   @Field(key: "name") var name: String
-  @Field(key: "details") var details: String?
+  @OptionalField(key: "details") var details: String?
+  @OptionalField(key: "last_activity_date") var lastActivityDate: Date?
 
   @Children(for: \.$forumCategory) var forumPosts: [ForumPost]
 
@@ -21,6 +21,18 @@ final class ForumCategory: Model, @unchecked Sendable {
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
     self.details = dto.details?.trimmingCharacters(in: .whitespacesAndNewlines)
   }
+}
+
+final class ForumCategoryWithCounts: Model, @unchecked Sendable {
+  static let schema = "forum_categories_with_counts"
+  
+  @ID(key: .id) var id: UUID?
+  @Field(key: "name") var name: String
+  @OptionalField(key: "details") var details: String?
+  @OptionalField(key: "last_activity_date") var lastActivityDate: Date?
+  @Field(key: "total_posts") var totalPosts: Int
+  
+  init() {}
 }
 
 extension ForumCategory {

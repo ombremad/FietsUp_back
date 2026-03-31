@@ -29,7 +29,7 @@ struct ForumPostController: RouteCollection {
         body: .type(CreateForumPostDTO.self),
         response: .type(GetForumPostDTO.self)
       )
-    
+        
     userProtected.get(":id", use: self.getById)
       .openAPI(
         tags: "Forum", "Posts",
@@ -114,6 +114,11 @@ struct ForumPostController: RouteCollection {
     guard let post = try await query.first() else {
       throw Abort(.notFound)
     }
+    
+    post.$forumComments.value = post.$forumComments.value?
+      .filter { $0.creationDate != nil }
+      .sorted { $0.creationDate! < $1.creationDate! }
+    
     return post
   }
 }

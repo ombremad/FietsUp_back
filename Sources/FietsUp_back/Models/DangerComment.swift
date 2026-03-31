@@ -8,7 +8,8 @@ final class DangerComment: Model, @unchecked Sendable {
   @ID(key: .id) var id: UUID?
 
   @Field(key: "content") var content: String
-  @Field(key: "creation_date") var creationDate: Date
+
+  @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
 
   @Parent(key: "id_user") var user: User
   @Parent(key: "id_danger_post") var dangerPost: DangerPost

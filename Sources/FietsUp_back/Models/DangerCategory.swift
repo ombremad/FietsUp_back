@@ -9,6 +9,7 @@ final class DangerCategory: Model, @unchecked Sendable {
 
   @Field(key: "name") var name: String
   @Field(key: "icon_name") var iconName: String
+  @Field(key: "last_activity_date") var lastActivityDate: Date?
 
   @Children(for: \.$dangerCategory) var dangerPosts: [DangerPost]
 

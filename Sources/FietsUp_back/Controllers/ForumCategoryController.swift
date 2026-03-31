@@ -7,28 +7,41 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 struct ForumCategoryController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
     
-    let request = routes.grouped("forum", "categories")
+    let userProtected =
+    routes.grouped("forum", "categories")
+      .grouped(JWTMiddleware())
+      .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
+
     let adminProtected =
-      request
+    routes.grouped("admin", "forum", "categories")
         .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
         .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
-    adminProtected.post(use: self.create)
+    userProtected.get(use: self.getAll)
       .openAPI(
         tags: "Forum", "Categories",
+        summary: "List",
+        description: "List forum categories",
+        response: .type([GetForumCategoryWithCountsDTO].self)
+      )
+    
+    adminProtected.post(use: self.create)
+      .openAPI(
+        tags: "Admin", "Forum", "Categories",
         summary: "Create",
         description: "Create a forum category",
         body: .type(CreateForumCategoryDTO.self),
         response: .type(GetForumCategoryDTO.self)
       )
     
-    adminProtected.get(use: self.getAll)
+    adminProtected.get(use: self.getAllAdmin)
       .openAPI(
-        tags: "Forum", "Categories",
+        tags: "Admin", "Forum", "Categories",
         summary: "List",
         description: "List all available forum categories",
         response: .type([GetForumCategoryDTO].self)
@@ -36,7 +49,7 @@ struct ForumCategoryController: RouteCollection {
     
     adminProtected.patch(":id", use: self.patchById)
       .openAPI(
-        tags: "Forum", "Categories",
+        tags: "Admin", "Forum", "Categories",
         summary: "Patch",
         description: "Find and patch an existing forum category by id",
         path: .type(UUID.self),
@@ -46,12 +59,22 @@ struct ForumCategoryController: RouteCollection {
     
     adminProtected.delete(":id", use: self.deleteById)
       .openAPI(
-        tags: "Forum", "Categories",
+        tags: "Admin", "Forum", "Categories",
         summary: "Delete",
         description: "Permanently delete an existing forum category by id",
         path: .type(UUID.self),
         response: .type(HTTPStatus.self)
       )
+  }
+  
+  // User
+  
+  @Sendable
+  func getAll(req: Request) async throws -> [GetForumCategoryWithCountsDTO] {
+    try await ForumCategoryWithCounts.query(on: req.db)
+      .sort(\.$lastActivityDate, .descending)
+      .all()
+      .map { category in try GetForumCategoryWithCountsDTO(from: category) }
   }
   
   @Sendable
@@ -63,9 +86,11 @@ struct ForumCategoryController: RouteCollection {
     try await forumCategory.save(on: req.db)
     return try GetForumCategoryDTO(from: forumCategory)
   }
+    
+  // Admin
   
   @Sendable
-  func getAll(req: Request) async throws -> [GetForumCategoryDTO] {
+  func getAllAdmin(req: Request) async throws -> [GetForumCategoryDTO] {
     try await ForumCategory.query(on: req.db)
       .sort(\.$name)
       .all()
@@ -75,7 +100,7 @@ struct ForumCategoryController: RouteCollection {
   @Sendable
   func patchById(req: Request) async throws -> GetForumCategoryDTO {
     let id = try req.parameters.require("id", as: UUID.self)
-    let category = try await find(id: id, on: req.db)
+    let category = try await findCategory(id: id, on: req.db)
     
     try PatchForumCategoryDTO.validate(content: req)
     let dto = try req.content.decode(PatchForumCategoryDTO.self)
@@ -87,20 +112,16 @@ struct ForumCategoryController: RouteCollection {
   @Sendable
   func deleteById(req: Request) async throws -> HTTPStatus {
     let id = try req.parameters.require("id", as: UUID.self)
-    let category = try await find(id: id, on: req.db)
+    let category = try await findCategory(id: id, on: req.db)
     
     try await category.delete(on: req.db)
     return .noContent
   }
-  
-  private func find(id: UUID, on db: any Database) async throws -> ForumCategory {
-    guard
-      let category = try await ForumCategory.query(on: db)
+    
+  private func findCategory(id: UUID, on db: any Database) async throws -> ForumCategory {
+    let query = try await ForumCategory.query(on: db)
         .filter(\.$id == id)
         .first()
-    else {
-      throw Abort(.notFound)
-    }
-    return category
+    return try returnOrFail(query)
   }
 }
