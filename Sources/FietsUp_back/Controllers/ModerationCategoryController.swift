@@ -12,8 +12,8 @@ struct ModerationCategoryController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
     
     let request = routes.grouped("moderation", "categories")
-    let adminProtected =
-    request
+    
+    let adminProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
@@ -34,7 +34,7 @@ struct ModerationCategoryController: RouteCollection {
         response: .type([GetModerationCategoryDTO].self)
       )
     
-    adminProtected.patch(":id", use: self.patchById)
+    adminProtected.patch(":id", use: self.patchByID)
       .openAPI(
         tags: "Moderation", "Categories",
         summary: "Patch",
@@ -64,7 +64,7 @@ struct ModerationCategoryController: RouteCollection {
   }
   
   @Sendable
-  func patchById(req: Request) async throws -> GetModerationCategoryDTO {
+  func patchByID(req: Request) async throws -> GetModerationCategoryDTO {
     let id = try req.parameters.require("id", as: UUID.self)
     let category = try await find(id: id, on: req.db)
     

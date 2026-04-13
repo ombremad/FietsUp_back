@@ -12,8 +12,8 @@ struct ActivityController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
 
     let request = routes.grouped("activities")
-    let userProtected =
-      request
+    
+    let userProtected = request
       .grouped(JWTMiddleware())
       .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
 
@@ -25,14 +25,14 @@ struct ActivityController: RouteCollection {
         body: .type(CreateActivityDTO.self),
         response: .type(GetActivityDTO.self)
       )
-    userProtected.get(use: self.getAllForUser)
+    userProtected.get(use: self.getAll)
       .openAPI(
         tags: "Activities",
         summary: "List",
         description: "Get all activities for current user",
         response: .type([GetActivityDTO].self),
       )
-    userProtected.delete(":id", use: self.deleteById)
+    userProtected.delete(":id", use: self.deleteByID)
       .openAPI(
         tags: "Activities",
         summary: "Delete",
@@ -61,7 +61,7 @@ struct ActivityController: RouteCollection {
   }
 
   @Sendable
-  func getAllForUser(req: Request) async throws -> [GetActivityDTO] {
+  func getAll(req: Request) async throws -> [GetActivityDTO] {
     let user = try await req.requireUser()
     let userID = try user.requireID()
     
@@ -75,7 +75,7 @@ struct ActivityController: RouteCollection {
   }
 
   @Sendable
-  func deleteById(req: Request) async throws -> HTTPStatus {
+  func deleteByID(req: Request) async throws -> HTTPStatus {
     let id = try req.parameters.require("id", as: UUID.self)
     let activity = try await find(id: id, on: req.db)
     

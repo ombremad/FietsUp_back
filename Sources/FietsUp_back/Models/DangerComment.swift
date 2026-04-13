@@ -22,4 +22,21 @@ final class DangerComment: Model, @unchecked Sendable {
     [User]
 
   init() {}
+  
+  convenience init(from dto: CreateDangerCommentDTO, userID: UUID, dangerPostID: UUID) {
+    self.init()
+    
+    // computed
+    self.$user.id = userID
+    self.$dangerPost.id = dangerPostID
+
+    // user provided
+    self.content = dto.content.trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+}
+
+extension DangerComment {
+  func patch(with dto: PatchDangerCommentDTO) {
+    if let content = dto.content { self.content = content.trimmingCharacters(in: .whitespacesAndNewlines) }
+  }
 }

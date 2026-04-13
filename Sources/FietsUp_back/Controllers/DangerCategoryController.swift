@@ -12,10 +12,14 @@ struct DangerCategoryController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
     
     let request = routes.grouped("dangers", "categories")
-    let adminProtected =
-      request
-        .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
-        .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
+    
+    let userProtected = request
+      .grouped(JWTMiddleware())
+      .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
+    
+    let adminProtected = request
+      .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
+      .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
     adminProtected.post(use: self.create)
       .openAPI(
@@ -34,7 +38,7 @@ struct DangerCategoryController: RouteCollection {
         response: .type([GetDangerCategoryDTO].self)
       )
     
-    adminProtected.patch(":id", use: self.patchById)
+    adminProtected.patch(":categoryID", use: self.patchByID)
       .openAPI(
         tags: "Dangers", "Categories",
         summary: "Patch",
@@ -43,6 +47,9 @@ struct DangerCategoryController: RouteCollection {
         body: .type(PatchDangerCategoryDTO.self),
         response: .type(GetDangerCategoryDTO.self)
       )
+    
+    let posts = userProtected.grouped(":categoryID", "posts")
+    try DangerPostController().boot(routes: posts)
   }
   
   @Sendable
@@ -64,8 +71,8 @@ struct DangerCategoryController: RouteCollection {
   }
   
   @Sendable
-  func patchById(req: Request) async throws -> GetDangerCategoryDTO {
-    let id = try req.parameters.require("id", as: UUID.self)
+  func patchByID(req: Request) async throws -> GetDangerCategoryDTO {
+    let id = try req.parameters.require("categoryID", as: UUID.self)
     let category = try await find(id: id, on: req.db)
     
     try PatchDangerCategoryDTO.validate(content: req)

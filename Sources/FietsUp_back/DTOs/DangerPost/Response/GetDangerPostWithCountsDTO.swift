@@ -1,13 +1,13 @@
 //
-//  GetDangerPostDTO.swift
+//  GetDangerPostWithCountsDTO.swift
 //  FietsUp_back
 //
-//  Created by Anne Ferret on 26/03/2026.
+//  Created by Anne Ferret on 13/04/2026.
 //
 
 import Vapor
 
-struct GetDangerPostDTO: Content {
+struct GetDangerPostWithCountsDTO: Content {
   var id: UUID
   var title: String
   var content: String
@@ -16,11 +16,11 @@ struct GetDangerPostDTO: Content {
   var user: GetUserShortDTO
   var creationDate: Date?
   var dangerCategory: GetDangerCategoryDTO
-  var comments: [GetDangerCommentDTO]
+  var totalComments: Int
 }
 
-extension GetDangerPostDTO {
-  init(from model: DangerPost) throws {
+extension GetDangerPostWithCountsDTO {
+  init(from model: DangerPost, totalComments: Int) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
     
     self.init(
@@ -32,7 +32,7 @@ extension GetDangerPostDTO {
       user: try GetUserShortDTO(from: model.user),
       creationDate: model.creationDate,
       dangerCategory: try GetDangerCategoryDTO(from: model.dangerCategory),
-      comments: try model.dangerComments.map { try GetDangerCommentDTO(from: $0) }
+      totalComments: totalComments
     )
   }
 }

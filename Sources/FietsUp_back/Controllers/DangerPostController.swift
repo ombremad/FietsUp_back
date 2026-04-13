@@ -7,21 +7,22 @@
 
 import Vapor
 import Fluent
+import SQLKit
 
 struct DangerPostController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
     
     let request = routes.grouped("dangers", "posts")
-    let userProtected =
-    request
+    
+    let userProtected = request
       .grouped(JWTMiddleware())
       .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
-    let modProtected =
-    request
+    
+    let modProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 1))
       .groupedOpenAPI(auth: .bearer(id: "ModBearer", format: "JWT"))
     
-    userProtected.post(":categoryID", use: self.create)
+    userProtected.post("category", ":dangerCategoryID", use: self.create)
       .openAPI(
         tags: "Dangers", "Posts",
         summary: "Create",
@@ -30,7 +31,15 @@ struct DangerPostController: RouteCollection {
         response: .type(GetDangerPostDTO.self)
       )
     
-    userProtected.get(":id", use: self.getById)
+    userProtected.get(use: self.getAll)
+      .openAPI(
+        tags: "Dangers", "Posts",
+        summary: "List",
+        description: "List danger posts",
+        response: .type([GetDangerPostWithCountsDTO].self)
+      )
+    
+    userProtected.get(":dangerPostID", use: self.getByID)
       .openAPI(
         tags: "Dangers", "Posts",
         summary: "Get",
@@ -39,7 +48,7 @@ struct DangerPostController: RouteCollection {
         response: .type(GetDangerPostDTO.self)
       )
     
-    modProtected.patch(":id", use: self.patchById)
+    modProtected.patch(":dangerPostID", use: self.patchByID)
       .openAPI(
         tags: "Dangers", "Posts",
         summary: "Patch",
@@ -49,7 +58,7 @@ struct DangerPostController: RouteCollection {
         response: .type(GetDangerPostDTO.self)
       )
     
-    modProtected.delete(":id", use: self.deleteById)
+    modProtected.delete(":dangerPostID", use: self.deleteByID)
       .openAPI(
         tags: "Dangers", "Posts",
         summary: "Delete",
@@ -66,26 +75,45 @@ struct DangerPostController: RouteCollection {
     
     let user = try await req.requireUser()
     let userID = try user.requireID()
-    let dangerCategoryID = try req.parameters.require("categoryID", as: UUID.self)
+    let dangerCategoryID = try req.parameters.require("dangerCategoryID", as: UUID.self)
+    
+    guard try await DangerCategory.find(dangerCategoryID, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "Danger category not found")
+    }
     
     let post = DangerPost(from: dto, userID: userID, dangerCategoryID: dangerCategoryID)
     try await post.save(on: req.db)
     
     let postID = try post.requireID()
-    return try GetDangerPostDTO(from: try await findPost(id: postID, on: req.db))
+    return try GetDangerPostDTO(from: try await findDangerPost(id: postID, on: req.db))
   }
   
   @Sendable
-  func getById(req: Request) async throws -> GetDangerPostDTO {
-    let postID = try req.parameters.require("id", as: UUID.self)
-    let post = try await findPost(id: postID, on: req.db)
+  func getAll(req: Request) async throws -> [GetDangerPostWithCountsDTO] {
+    let posts = try await DangerPost.query(on: req.db)
+      .sort(\.$creationDate, .descending)
+      .with(\.$user)
+      .with(\.$dangerCategory)
+      .all()
+    
+    let countsByPostID = try await commentCounts(for: posts, on: req.db)
+    
+    return try posts.map { post in
+      try GetDangerPostWithCountsDTO(from: post, totalComments: countsByPostID[post.requireID()] ?? 0)
+    }
+  }
+  
+  @Sendable
+  func getByID(req: Request) async throws -> GetDangerPostDTO {
+    let postID = try req.parameters.require("dangerPostID", as: UUID.self)
+    let post = try await findDangerPost(id: postID, on: req.db)
     return try GetDangerPostDTO(from: post)
   }
   
   @Sendable
-  func patchById(req: Request) async throws -> GetDangerPostDTO {
-    let postID = try req.parameters.require("id", as: UUID.self)
-    let post = try await findPost(id: postID, on: req.db)
+  func patchByID(req: Request) async throws -> GetDangerPostDTO {
+    let postID = try req.parameters.require("dangerPostID", as: UUID.self)
+    let post = try await findDangerPost(id: postID, on: req.db)
     
     try PatchDangerPostDTO.validate(content: req)
     let dto = try req.content.decode(PatchDangerPostDTO.self)
@@ -95,31 +123,32 @@ struct DangerPostController: RouteCollection {
   }
   
   @Sendable
-  func deleteById(req: Request) async throws -> HTTPStatus {
-    let id = try req.parameters.require("id", as: UUID.self)
-    let post = try await findPost(id: id, on: req.db)
+  func deleteByID(req: Request) async throws -> HTTPStatus {
+    let id = try req.parameters.require("dangerPostID", as: UUID.self)
+    let post = try await findDangerPost(id: id, on: req.db)
     
     try await post.delete(on: req.db)
     return .noContent
   }
-  
-  private func findPost(id: UUID, on db: any Database) async throws -> DangerPost {
-    let query = DangerPost.query(on: db)
-      .filter(\.$id == id)
-      .with(\.$user)
-      .with(\.$dangerComments) { comment in
-        comment.with(\.$user)
-      }
     
-    guard let post = try await query.first() else {
-      throw Abort(.notFound)
-    }
+  private func commentCounts(for posts: [DangerPost], on db: any Database) async throws -> [UUID: Int] {
+    guard let sql = db as? any SQLDatabase else { throw Abort(.internalServerError) }
     
-    post.$dangerComments.value = post.$dangerComments.value?
-      .filter { $0.creationDate != nil }
-      .sorted { $0.creationDate! < $1.creationDate! }
+    let idList = try posts
+      .map { "UNHEX('\(try $0.requireID().hexString)')" }
+      .joined(separator: ", ")
     
-    return post
+    let rows = try await sql.raw("""
+        SELECT HEX(id_danger_post) as id_danger_post, COUNT(*) as total_comments
+        FROM \(unsafeRaw: DangerComment.schema)
+        WHERE id_danger_post IN (\(unsafeRaw: idList))
+        GROUP BY id_danger_post
+        """).all()
+    
+    return try Dictionary(uniqueKeysWithValues: rows.map {
+      let hex = try $0.decode(column: "id_danger_post", as: String.self)
+      guard let uuid = UUID(hex: hex) else { throw Abort(.internalServerError) }
+      return (uuid, try $0.decode(column: "total_comments", as: Int.self))
+    })
   }
-
 }

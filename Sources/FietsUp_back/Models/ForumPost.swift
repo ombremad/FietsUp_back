@@ -6,7 +6,6 @@ final class ForumPost: Model, @unchecked Sendable {
   static let schema = "forum_posts"
 
   @ID(key: .id) var id: UUID?
-
   @Field(key: "title") var title: String
   @Field(key: "content") var content: String
   @OptionalField(key: "last_activity_date") var lastActivityDate: Date?

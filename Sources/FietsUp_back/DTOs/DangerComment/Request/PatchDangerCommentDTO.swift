@@ -8,7 +8,7 @@
 import Vapor
 
 struct PatchDangerCommentDTO: Content {
-  let comment: String?
+  let content: String?
 }
 
 extension PatchDangerCommentDTO: Validatable {

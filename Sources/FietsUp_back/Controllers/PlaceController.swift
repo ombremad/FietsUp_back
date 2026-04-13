@@ -12,14 +12,10 @@ struct PlaceController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
     
     let request = routes.grouped("places")
-    let userProtected =
-      request
-        .grouped(JWTMiddleware())
-        .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
-    let adminProtected =
-      request
-        .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
-        .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
+    
+    let adminProtected = request
+      .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
+      .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
     adminProtected.post(use: self.create)
       .openAPI(
@@ -38,7 +34,7 @@ struct PlaceController: RouteCollection {
         response: .type([GetPlaceDTO].self)
       )
     
-    adminProtected.patch(":id", use: self.patchById)
+    adminProtected.patch(":placeID", use: self.patchByID)
       .openAPI(
         tags: "Places",
         summary: "Patch",
@@ -48,7 +44,7 @@ struct PlaceController: RouteCollection {
         response: .type(GetPlaceDTO.self)
       )
     
-    adminProtected.delete(":id", use: self.deleteById)
+    adminProtected.delete(":placeID", use: self.deleteByID)
       .openAPI(
         tags: "Places",
         summary: "Delete",
@@ -87,8 +83,8 @@ struct PlaceController: RouteCollection {
   }
   
   @Sendable
-  func patchById(req: Request) async throws -> GetPlaceDTO {
-    let id = try req.parameters.require("id", as: UUID.self)
+  func patchByID(req: Request) async throws -> GetPlaceDTO {
+    let id = try req.parameters.require("placeID", as: UUID.self)
     let place = try await find(id: id, on: req.db)
     
     try PatchPlaceDTO.validate(content: req)
@@ -99,8 +95,8 @@ struct PlaceController: RouteCollection {
   }
   
   @Sendable
-  func deleteById(req: Request) async throws -> HTTPStatus {
-    let id = try req.parameters.require("id", as: UUID.self)
+  func deleteByID(req: Request) async throws -> HTTPStatus {
+    let id = try req.parameters.require("placeID", as: UUID.self)
     let place = try await find(id: id, on: req.db)
     
     try await place.delete(on: req.db)

@@ -56,6 +56,7 @@ func routes(_ app: Application) throws {
   // feature: dangers
   try app.register(collection: DangerPostController())
   try app.register(collection: DangerCategoryController())
+  try app.register(collection: DangerCommentController())
   
   // feature: forum
   try app.register(collection: ForumPostController())

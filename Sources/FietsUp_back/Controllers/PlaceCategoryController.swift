@@ -12,10 +12,10 @@ struct PlaceCategoryController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
     
     let request = routes.grouped("places", "categories")
-    let adminProtected =
-      request
-        .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
-        .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
+    
+    let adminProtected = request
+      .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
+      .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
 
     adminProtected.post(use: self.create)
       .openAPI(
@@ -34,7 +34,7 @@ struct PlaceCategoryController: RouteCollection {
         response: .type([GetPlaceCategoryDTO].self)
       )
     
-    adminProtected.patch(":id", use: self.patchById)
+    adminProtected.patch(":placeCategoryID", use: self.patchByID)
       .openAPI(
         tags: "Places", "Categories",
         summary: "Patch",
@@ -44,7 +44,7 @@ struct PlaceCategoryController: RouteCollection {
         response: .type(GetPlaceCategoryDTO.self)
       )
     
-    adminProtected.delete(":id", use: self.deleteById)
+    adminProtected.delete(":placeCategoryID", use: self.deleteByID)
       .openAPI(
         tags: "Places", "Categories",
         summary: "Delete",
@@ -73,8 +73,8 @@ struct PlaceCategoryController: RouteCollection {
   }
   
   @Sendable
-  func patchById(req: Request) async throws -> GetPlaceCategoryDTO {
-    let id = try req.parameters.require("id", as: UUID.self)
+  func patchByID(req: Request) async throws -> GetPlaceCategoryDTO {
+    let id = try req.parameters.require("placeCategoryID", as: UUID.self)
     let category = try await find(id: id, on: req.db)
     
     try PatchPlaceCategoryDTO.validate(content: req)
@@ -85,8 +85,8 @@ struct PlaceCategoryController: RouteCollection {
   }
   
   @Sendable
-  func deleteById(req: Request) async throws -> HTTPStatus {
-    let id = try req.parameters.require("id", as: UUID.self)
+  func deleteByID(req: Request) async throws -> HTTPStatus {
+    let id = try req.parameters.require("placeCategoryID", as: UUID.self)
     let category = try await find(id: id, on: req.db)
 
     try await category.delete(on: req.db)

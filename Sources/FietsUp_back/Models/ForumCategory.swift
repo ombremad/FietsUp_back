@@ -23,18 +23,6 @@ final class ForumCategory: Model, @unchecked Sendable {
   }
 }
 
-final class ForumCategoryWithCounts: Model, @unchecked Sendable {
-  static let schema = "forum_categories_with_counts"
-  
-  @ID(key: .id) var id: UUID?
-  @Field(key: "name") var name: String
-  @OptionalField(key: "details") var details: String?
-  @OptionalField(key: "last_activity_date") var lastActivityDate: Date?
-  @Field(key: "total_posts") var totalPosts: Int
-  
-  init() {}
-}
-
 extension ForumCategory {
   func patch(with dto: PatchForumCategoryDTO) {
     if let name = dto.name { self.name = name.trimmingCharacters(in: .whitespacesAndNewlines) }

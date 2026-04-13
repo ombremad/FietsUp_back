@@ -12,12 +12,12 @@ struct UserController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
 
     let request = routes.grouped("users")
-    let userProtected =
-      request
+    
+    let userProtected = request
       .grouped(JWTMiddleware())
       .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
-    let adminProtected =
-      request
+    
+    let adminProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
 
@@ -49,7 +49,7 @@ struct UserController: RouteCollection {
         response: .type([GetUserDTO].self)
       )
 
-    adminProtected.get(":id", use: self.getById)
+    adminProtected.get(":userID", use: self.getByID)
       .openAPI(
         tags: "Users",
         summary: "Find",
@@ -58,7 +58,7 @@ struct UserController: RouteCollection {
         response: .type(GetUserDTO.self)
       )
 
-    adminProtected.patch(":id", use: self.patchById)
+    adminProtected.patch(":userID", use: self.patchByID)
       .openAPI(
         tags: "Users",
         summary: "Patch",
@@ -68,7 +68,7 @@ struct UserController: RouteCollection {
         response: .type(GetUserDTO.self)
       )
 
-    adminProtected.delete(":id", use: self.deleteById)
+    adminProtected.delete(":userID", use: self.deleteByID)
       .openAPI(
         tags: "Users",
         summary: "Delete",
@@ -144,9 +144,9 @@ struct UserController: RouteCollection {
   }
 
   @Sendable
-  func getById(req: Request) async throws -> GetUserDTO {
-    let userId = try req.parameters.require("id", as: UUID.self)
-    let user = try await findUser(id: userId, on: req.db)
+  func getByID(req: Request) async throws -> GetUserDTO {
+    let userID = try req.parameters.require("userID", as: UUID.self)
+    let user = try await findUser(id: userID, on: req.db)
     return try GetUserDTO(from: user)
   }
 
@@ -157,9 +157,9 @@ struct UserController: RouteCollection {
   }
 
   @Sendable
-  func patchById(req: Request) async throws -> GetUserDTO {
-    let userId = try req.parameters.require("id", as: UUID.self)
-    let user = try await findUser(id: userId, on: req.db)
+  func patchByID(req: Request) async throws -> GetUserDTO {
+    let userID = try req.parameters.require("userID", as: UUID.self)
+    let user = try await findUser(id: userID, on: req.db)
     return try await patchUser(user, req: req)
   }
 
@@ -170,9 +170,9 @@ struct UserController: RouteCollection {
   }
 
   @Sendable
-  func deleteById(req: Request) async throws -> HTTPStatus {
-    let userId = try req.parameters.require("id", as: UUID.self)
-    let user = try await findUser(id: userId, on: req.db)
+  func deleteByID(req: Request) async throws -> HTTPStatus {
+    let userID = try req.parameters.require("userID", as: UUID.self)
+    let user = try await findUser(id: userID, on: req.db)
     return try await deleteUser(user, on: req.db)
   }
 

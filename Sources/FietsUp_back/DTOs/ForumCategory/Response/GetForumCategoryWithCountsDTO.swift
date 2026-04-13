@@ -17,7 +17,7 @@ struct GetForumCategoryWithCountsDTO: Content {
 }
 
 extension GetForumCategoryWithCountsDTO {
-  init(from model: ForumCategoryWithCounts) throws {
+  init(from model: ForumCategory, totalPosts: Int) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
     
     self.init(
@@ -25,7 +25,7 @@ extension GetForumCategoryWithCountsDTO {
       name: model.name,
       details: model.details,
       lastActivityDate: model.lastActivityDate,
-      totalPosts: model.totalPosts
+      totalPosts: totalPosts
     )
   }
 }
