@@ -22,15 +22,7 @@ struct ForumCategoryController: RouteCollection {
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
-    userProtected.get(use: self.getAll)
-      .openAPI(
-        tags: "Forum", "Categories",
-        summary: "List",
-        description: "List forum categories",
-        response: .type([GetForumCategoryWithCountsDTO].self)
-      )
-    
-    adminProtected.post(use: self.create)
+    adminProtected.post("admin", use: self.create)
       .openAPI(
         tags: "Admin", "Forum", "Categories",
         summary: "Create",
@@ -39,7 +31,31 @@ struct ForumCategoryController: RouteCollection {
         response: .type(GetForumCategoryDTO.self)
       )
     
-    adminProtected.patch(":forumCategoryID", use: self.patchByID)
+    adminProtected.get("admin", use: self.getAll)
+      .openAPI(
+        tags: "Forum", "Categories",
+        summary: "List",
+        description: "List forum categories",
+        response: .type([GetForumCategoryWithCountsDTO].self)
+      )
+    
+    userProtected.get(use: self.getIndex)
+      .openAPI(
+        tags: "Forum", "Categories",
+        summary: "Index",
+        description: "Forum index",
+        response: .type([GetForumCategoryWithCountsDTO].self)
+      )
+    
+    userProtected.get(":forumCategoryID", use: self.getByID)
+      .openAPI(
+        tags: "Forum", "Categories",
+        summary: "Get",
+        description: "Find and get an existing category and its posts by id",
+        response: .type(GetForumCategoryDTO.self)
+      )
+        
+    adminProtected.patch("admin", ":forumCategoryID", use: self.patchByID)
       .openAPI(
         tags: "Admin", "Forum", "Categories",
         summary: "Patch",
@@ -49,7 +65,7 @@ struct ForumCategoryController: RouteCollection {
         response: .type(GetForumCategoryDTO.self)
       )
     
-    adminProtected.delete(":forumCategoryID", use: self.deleteByID)
+    adminProtected.delete("admin", ":forumCategoryID", use: self.deleteByID)
       .openAPI(
         tags: "Admin", "Forum", "Categories",
         summary: "Delete",
@@ -60,40 +76,49 @@ struct ForumCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> Response {
-    let user = try await req.requireUser()
-    
-    // TODO: split that into different routes
-    if user.adminRights >= 2 {
-      let categories = try await ForumCategory.query(on: req.db)
-        .sort(\.$name)
-        .all()
-        .map { try GetForumCategoryDTO(from: $0) }
-      return try await categories.encodeResponse(for: req)
-    } else {
-      let categories = try await ForumCategory.query(on: req.db)
-        .sort(\.$lastActivityDate, .descending)
-        .all()
-      
-      let countsByCategoryID = try await postCounts(for: categories, on: req.db)
-      
-      let dtos = try categories.map { category in
-        try GetForumCategoryWithCountsDTO(from: category, totalPosts: countsByCategoryID[category.requireID()] ?? 0)
-      }
-      return try await dtos.encodeResponse(for: req)
-    }
-  }
-  
-  @Sendable
   func create(req: Request) async throws -> GetForumCategoryDTO {
     try CreateForumCategoryDTO.validate(content: req)
     let dto = try req.content.decode(CreateForumCategoryDTO.self)
     
     let forumCategory = ForumCategory(from: dto)
     try await forumCategory.save(on: req.db)
-    return try GetForumCategoryDTO(from: forumCategory)
+    return try GetForumCategoryDTO(from: forumCategory, commentCounts: [:])
   }
   
+  @Sendable
+  func getAll(req: Request) async throws -> [GetForumCategoryWithCountsDTO] {
+    let categories = try await ForumCategory.query(on: req.db)
+      .sort(\.$name)
+      .all()
+    
+    let countsByCategoryID = try await postCounts(for: categories, on: req.db)
+    
+    return try categories.map { category in
+      try GetForumCategoryWithCountsDTO(from: category, totalPosts: countsByCategoryID[category.requireID()] ?? 0)
+    }
+  }
+  
+  @Sendable
+  func getIndex(req: Request) async throws -> [GetForumCategoryWithCountsDTO] {
+    let categories = try await ForumCategory.query(on: req.db)
+      .sort(\.$lastActivityDate, .descending)
+      .all()
+    
+    let countsByCategoryID = try await postCounts(for: categories, on: req.db)
+    
+    return try categories.map { category in
+      try GetForumCategoryWithCountsDTO(from: category, totalPosts: countsByCategoryID[category.requireID()] ?? 0)
+    }
+  }
+  
+  @Sendable
+  func getByID(req: Request) async throws -> GetForumCategoryDTO {
+    let categoryID = try req.parameters.require("forumCategoryID", as: UUID.self)
+    let category = try await findCategory(id: categoryID, on: req.db)
+    let commentCounts = try await countForumComments(for: category.forumPosts, on: req.db)
+    return try GetForumCategoryDTO(from: category, commentCounts: commentCounts)
+  }
+      
   @Sendable
   func patchByID(req: Request) async throws -> GetForumCategoryDTO {
     let id = try req.parameters.require("forumCategoryID", as: UUID.self)
@@ -103,7 +128,7 @@ struct ForumCategoryController: RouteCollection {
     let dto = try req.content.decode(PatchForumCategoryDTO.self)
     category.patch(with: dto)
     try await category.save(on: req.db)
-    return try GetForumCategoryDTO(from: category)
+    return try GetForumCategoryDTO(from: category, commentCounts: [:])
   }
   
   @Sendable
@@ -116,13 +141,22 @@ struct ForumCategoryController: RouteCollection {
   }
   
   private func findCategory(id: UUID, on db: any Database) async throws -> ForumCategory {
-    let query = try await ForumCategory.query(on: db)
+    let query = ForumCategory.query(on: db)
       .filter(\.$id == id)
-      .first()
-    return try returnOrFail(query)
+      .with(\.$forumPosts) { $0.with(\.$user) }
+    
+    guard let category = try await query.first() else {
+      throw Abort(.notFound)
+    }
+    
+    category.$forumPosts.value = category.$forumPosts.value?
+      .filter { $0.creationDate != nil }
+      .sorted { ($0.lastActivityDate ?? $0.creationDate!) > ($1.lastActivityDate ?? $1.creationDate!) }
+    return category
   }
   
   private func postCounts(for categories: [ForumCategory], on db: any Database) async throws -> [UUID: Int] {
+    guard !categories.isEmpty else { return [:] }
     guard let sql = db as? any SQLDatabase else { throw Abort(.internalServerError) }
     
     let idList = try categories

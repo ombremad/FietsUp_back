@@ -132,6 +132,7 @@ struct DangerPostController: RouteCollection {
   }
     
   private func commentCounts(for posts: [DangerPost], on db: any Database) async throws -> [UUID: Int] {
+    guard !posts.isEmpty else { return [:] }
     guard let sql = db as? any SQLDatabase else { throw Abort(.internalServerError) }
     
     let idList = try posts

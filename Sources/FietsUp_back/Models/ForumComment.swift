@@ -34,3 +34,9 @@ final class ForumComment: Model, @unchecked Sendable {
     self.content = dto.content.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 }
+
+extension ForumComment {
+  func patch(with dto: PatchForumCommentDTO) {
+    if let content = dto.content { self.content = content.trimmingCharacters(in: .whitespacesAndNewlines) }
+  }
+}
