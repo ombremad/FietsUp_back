@@ -118,8 +118,8 @@ struct DangerPostController: RouteCollection {
       .filter(\.$dangerPost.$id == dangerPostID)
       .first()
     
-    if let like = existingLike {
-      try await like.delete(on: req.db)
+    if let existingLike {
+      try await existingLike.delete(on: req.db)
     } else {
       let newLike = DangerPostLike(userID: userID, dangerPostID: dangerPostID)
       try await newLike.save(on: req.db)
@@ -144,8 +144,8 @@ struct DangerPostController: RouteCollection {
       .filter(\.$dangerPost.$id == dangerPostID)
       .first()
     
-    if let fav = existingFav {
-      try await fav.delete(on: req.db)
+    if let existingFav {
+      try await existingFav.delete(on: req.db)
     } else {
       let newFav = DangerPostFav(userID: userID, dangerPostID: dangerPostID)
       try await newFav.save(on: req.db)

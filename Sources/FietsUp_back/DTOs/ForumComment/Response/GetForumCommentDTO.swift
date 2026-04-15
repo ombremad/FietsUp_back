@@ -12,10 +12,13 @@ struct GetForumCommentDTO: Content {
   var content: String
   var user: GetUserShortDTO
   var creationDate: Date?
+  var likeCount: Int
+  var likedByUser: Bool
+  var favedByUser: Bool
 }
 
 extension GetForumCommentDTO {
-  init(from model: ForumComment) throws {
+  init(from model: ForumComment, likeCount: Int, likedByUser: Bool, favedByUser: Bool) throws {
     guard let id = model.id else {
       throw Abort(.internalServerError)
     }
@@ -24,7 +27,10 @@ extension GetForumCommentDTO {
       id: id,
       content: model.content,
       user: try GetUserShortDTO(from: model.user),
-      creationDate: model.creationDate
+      creationDate: model.creationDate,
+      likeCount: likeCount,
+      likedByUser: likedByUser,
+      favedByUser: favedByUser
     )
   }
 }
