@@ -29,11 +29,11 @@ final class DangerPost: Model, @unchecked Sendable {
   convenience init(from dto: CreateDangerPostDTO, userID: UUID, dangerCategoryID: UUID) {
     self.init()
     
-    // computed
+      // computed
     self.$user.id = userID
     self.$dangerCategory.id = dangerCategoryID
     
-    // user provided
+      // user provided
     self.title = dto.title.trimmingCharacters(in: .whitespacesAndNewlines)
     self.content = dto.content.trimmingCharacters(in: .whitespacesAndNewlines)
     self.latitude = dto.latitude

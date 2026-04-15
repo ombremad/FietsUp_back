@@ -19,7 +19,7 @@ final class ModerationCategory: Model, @unchecked Sendable {
   convenience init(from dto: CreateModerationCategoryDTO) {
     self.init()
     
-    // user provided
+      // user provided
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 }

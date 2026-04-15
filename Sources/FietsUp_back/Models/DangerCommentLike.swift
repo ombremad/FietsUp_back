@@ -11,4 +11,12 @@ final class DangerCommentLike: Model, @unchecked Sendable {
   @Parent(key: "id_danger_comment") var dangerComment: DangerComment
 
   init() {}
+  
+  convenience init(userID: UUID, dangerCommentID: UUID) {
+    self.init()
+    
+      // computed
+    self.$user.id = userID
+    self.$dangerComment.id = dangerCommentID
+  }
 }

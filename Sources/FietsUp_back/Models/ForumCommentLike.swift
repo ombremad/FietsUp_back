@@ -11,4 +11,12 @@ final class ForumCommentLike: Model, @unchecked Sendable {
   @Parent(key: "id_forum_comment") var forumComment: ForumComment
 
   init() {}
+  
+  convenience init(userID: UUID, forumCommentID: UUID) {
+    self.init()
+
+      // computed
+    self.$user.id = userID
+    self.$forumComment.id = forumCommentID
+  }
 }

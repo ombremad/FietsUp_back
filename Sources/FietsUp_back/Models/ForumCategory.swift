@@ -17,7 +17,7 @@ final class ForumCategory: Model, @unchecked Sendable {
   convenience init(from dto: CreateForumCategoryDTO) {
     self.init()
     
-    // user provided
+      // user provided
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
     self.details = dto.details?.trimmingCharacters(in: .whitespacesAndNewlines)
   }

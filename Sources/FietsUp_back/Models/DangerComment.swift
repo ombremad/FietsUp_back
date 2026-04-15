@@ -26,11 +26,11 @@ final class DangerComment: Model, @unchecked Sendable {
   convenience init(from dto: CreateDangerCommentDTO, userID: UUID, dangerPostID: UUID) {
     self.init()
     
-    // computed
+      // computed
     self.$user.id = userID
     self.$dangerPost.id = dangerPostID
 
-    // user provided
+      // user provided
     self.content = dto.content.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 }

@@ -30,6 +30,20 @@ struct DangerCommentController: RouteCollection {
         response: .type(GetDangerPostDTO.self)
       )
     
+    userProtected.post(":dangerCommentID", "like", use: self.like)
+      .openAPI(
+        tags: "Dangers", "Comments",
+        summary: "Like a danger comment, or unlike it if previously liked",
+        response: .type(GetDangerPostDTO.self)
+      )
+    
+    userProtected.post(":dangerCommentID", "fav", use: self.fav)
+      .openAPI(
+        tags: "Dangers", "Comments",
+        summary: "Favorite a danger comment, or unfavorite it if previously faved",
+        response: .type(GetDangerPostDTO.self)
+      )
+    
     modProtected.patch(":dangerCommentID", use: self.patchByID)
       .openAPI(
         tags: "Dangers", "Comments",
@@ -65,6 +79,58 @@ struct DangerCommentController: RouteCollection {
     
     let comment = DangerComment(from: dto, userID: userID, dangerPostID: dangerPostID)
     try await comment.save(on: req.db)
+    
+    return try GetDangerPostDTO(from: try await findDangerPost(id: dangerPostID, on: req.db))
+  }
+  
+  @Sendable
+  func like(req: Request) async throws -> GetDangerPostDTO {
+    let user = try await req.requireUser()
+    let userID = try user.requireID()
+    
+    let dangerCommentID = try req.parameters.require("dangerCommentID", as: UUID.self)
+    guard let dangerComment = try await DangerComment.find(dangerCommentID, on: req.db) else {
+      throw Abort(.notFound, reason: "Forum comment not found")
+    }
+    let dangerPostID = dangerComment.$dangerPost.id
+    
+    let existingLike = try await DangerCommentLike.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$dangerComment.$id == dangerCommentID)
+      .first()
+    
+    if let like = existingLike {
+      try await like.delete(on: req.db)
+    } else {
+      let newLike = DangerCommentLike(userID: userID, dangerCommentID: dangerCommentID)
+      try await newLike.save(on: req.db)
+    }
+    
+    return try GetDangerPostDTO(from: try await findDangerPost(id: dangerPostID, on: req.db))
+  }
+  
+  @Sendable
+  func fav(req: Request) async throws -> GetDangerPostDTO {
+    let user = try await req.requireUser()
+    let userID = try user.requireID()
+    
+    let dangerCommentID = try req.parameters.require("dangerCommentID", as: UUID.self)
+    guard let dangerComment = try await DangerComment.find(dangerCommentID, on: req.db) else {
+      throw Abort(.notFound, reason: "Forum comment not found")
+    }
+    let dangerPostID = dangerComment.$dangerPost.id
+    
+    let existingFav = try await DangerCommentFav.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$dangerComment.$id == dangerCommentID)
+      .first()
+    
+    if let fav = existingFav {
+      try await fav.delete(on: req.db)
+    } else {
+      let newFav = DangerCommentFav(userID: userID, dangerCommentID: dangerCommentID)
+      try await newFav.save(on: req.db)
+    }
     
     return try GetDangerPostDTO(from: try await findDangerPost(id: dangerPostID, on: req.db))
   }

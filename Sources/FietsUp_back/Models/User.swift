@@ -62,7 +62,7 @@ final class User: Model, @unchecked Sendable {
     self.init()
     self.id = UUID()
 
-    // user provided
+      // user provided
     self.firstName = dto.firstName.trimmingCharacters(in: .whitespacesAndNewlines)
     self.lastName = dto.lastName.trimmingCharacters(in: .whitespacesAndNewlines)
     self.nickname = dto.nickname.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -70,7 +70,7 @@ final class User: Model, @unchecked Sendable {
     self.password = try Bcrypt.hash(dto.password)
     self.bio = dto.bio
 
-    // defaults
+      // defaults
     self.creationDate = .now
     self.banEndDate = nil
     self.adminRights = 0

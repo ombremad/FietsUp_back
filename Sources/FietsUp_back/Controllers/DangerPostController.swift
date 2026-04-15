@@ -31,6 +31,20 @@ struct DangerPostController: RouteCollection {
         response: .type(GetDangerPostDTO.self)
       )
     
+    userProtected.post(":dangerPostID", "like", use: self.like)
+      .openAPI(
+        tags: "Dangers", "Posts",
+        summary: "Like a danger post, or unlike it if previously liked",
+        response: .type(GetDangerPostDTO.self)
+      )
+    
+    userProtected.post(":dangerPostID", "fav", use: self.fav)
+      .openAPI(
+        tags: "Dangers", "Posts",
+        summary: "Favorite a danger post, or unfavorite it if previously faved",
+        response: .type(GetDangerPostDTO.self)
+      )
+    
     userProtected.get(use: self.getAll)
       .openAPI(
         tags: "Dangers", "Posts",
@@ -86,6 +100,58 @@ struct DangerPostController: RouteCollection {
     
     let postID = try post.requireID()
     return try GetDangerPostDTO(from: try await findDangerPost(id: postID, on: req.db))
+  }
+  
+  @Sendable
+  func like(req: Request) async throws -> GetDangerPostDTO {
+    let user = try await req.requireUser()
+    let userID = try user.requireID()
+    
+    let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
+    
+    guard try await DangerPost.find(dangerPostID, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "Danger post not found")
+    }
+    
+    let existingLike = try await DangerPostLike.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$dangerPost.$id == dangerPostID)
+      .first()
+    
+    if let like = existingLike {
+      try await like.delete(on: req.db)
+    } else {
+      let newLike = DangerPostLike(userID: userID, dangerPostID: dangerPostID)
+      try await newLike.save(on: req.db)
+    }
+    
+    return try GetDangerPostDTO(from: try await findDangerPost(id: dangerPostID, on: req.db))
+  }
+  
+  @Sendable
+  func fav(req: Request) async throws -> GetDangerPostDTO {
+    let user = try await req.requireUser()
+    let userID = try user.requireID()
+    
+    let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
+    
+    guard try await DangerPost.find(dangerPostID, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "Danger post not found")
+    }
+    
+    let existingFav = try await DangerPostFav.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$dangerPost.$id == dangerPostID)
+      .first()
+    
+    if let fav = existingFav {
+      try await fav.delete(on: req.db)
+    } else {
+      let newFav = DangerPostFav(userID: userID, dangerPostID: dangerPostID)
+      try await newFav.save(on: req.db)
+    }
+    
+    return try GetDangerPostDTO(from: try await findDangerPost(id: dangerPostID, on: req.db))
   }
   
   @Sendable

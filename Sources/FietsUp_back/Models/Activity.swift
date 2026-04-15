@@ -19,11 +19,11 @@ final class Activity: Model, @unchecked Sendable {
   convenience init(from dto: CreateActivityDTO, userID: UUID) {
     self.init()
 
-    // computed
+      // computed
     self.length = Int(dto.endDate.timeIntervalSince(dto.startDate) / 60)
     self.$user.id = userID
 
-    // user provided
+      // user provided
     self.startDate = dto.startDate
     self.endDate = dto.endDate
     self.distance = dto.distance

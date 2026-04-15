@@ -26,11 +26,11 @@ final class ForumComment: Model, @unchecked Sendable {
   convenience init(from dto: CreateForumCommentDTO, userID: UUID, forumPostID: UUID) {
     self.init()
     
-    // computed
+      // computed
     self.$user.id = userID
     self.$forumPost.id = forumPostID
     
-    // user provided
+      // user provided
     self.content = dto.content.trimmingCharacters(in: .whitespacesAndNewlines)
   }
 }

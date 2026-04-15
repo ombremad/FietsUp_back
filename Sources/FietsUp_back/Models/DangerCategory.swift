@@ -18,7 +18,7 @@ final class DangerCategory: Model, @unchecked Sendable {
   convenience init(from dto: CreateDangerCategoryDTO) {
     self.init()
     
-    // user provided
+      // user provided
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
     self.iconName = dto.iconName
   }

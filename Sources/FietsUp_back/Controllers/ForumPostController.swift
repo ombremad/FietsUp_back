@@ -30,6 +30,20 @@ struct ForumPostController: RouteCollection {
         body: .type(CreateForumPostDTO.self),
         response: .type(GetForumPostDTO.self)
       )
+    
+    userProtected.post(":forumPostID", "like", use: self.like)
+      .openAPI(
+        tags: "Forum", "Posts",
+        summary: "Like a forum post, or unlike it if previously liked",
+        response: .type(GetForumPostDTO.self)
+      )
+    
+    userProtected.post(":forumPostID", "fav", use: self.fav)
+      .openAPI(
+        tags: "Forum", "Posts",
+        summary: "Favorite a forum post, or unfavorite it if previously faved",
+        response: .type(GetForumPostDTO.self)
+      )
         
     userProtected.get(":forumPostID", use: self.getByID)
       .openAPI(
@@ -80,6 +94,58 @@ struct ForumPostController: RouteCollection {
     return try GetForumPostDTO(from: try await findForumPost(id: postID, on: req.db))
   }
   
+  @Sendable
+  func like(req: Request) async throws -> GetForumPostDTO {
+    let user = try await req.requireUser()
+    let userID = try user.requireID()
+    
+    let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
+
+    guard try await ForumPost.find(forumPostID, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "Forum post not found")
+    }
+
+    let existingLike = try await ForumPostLike.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$forumPost.$id == forumPostID)
+      .first()
+    
+    if let like = existingLike {
+      try await like.delete(on: req.db)
+    } else {
+      let newLike = ForumPostLike(userID: userID, forumPostID: forumPostID)
+      try await newLike.save(on: req.db)
+    }
+    
+    return try GetForumPostDTO(from: try await findForumPost(id: forumPostID, on: req.db))
+  }
+  
+  @Sendable
+  func fav(req: Request) async throws -> GetForumPostDTO {
+    let user = try await req.requireUser()
+    let userID = try user.requireID()
+    
+    let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
+    
+    guard try await ForumPost.find(forumPostID, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "Forum post not found")
+    }
+    
+    let existingFav = try await ForumPostFav.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$forumPost.$id == forumPostID)
+      .first()
+    
+    if let fav = existingFav {
+      try await fav.delete(on: req.db)
+    } else {
+      let newFav = ForumPostFav(userID: userID, forumPostID: forumPostID)
+      try await newFav.save(on: req.db)
+    }
+    
+    return try GetForumPostDTO(from: try await findForumPost(id: forumPostID, on: req.db))
+  }
+    
   @Sendable
   func getByID(req: Request) async throws -> GetForumPostDTO {
     let postID = try req.parameters.require("forumPostID", as: UUID.self)

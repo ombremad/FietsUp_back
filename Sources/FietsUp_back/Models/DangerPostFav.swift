@@ -11,4 +11,12 @@ final class DangerPostFav: Model, @unchecked Sendable {
   @Parent(key: "id_danger_post") var dangerPost: DangerPost
 
   init() {}
+  
+  convenience init(userID: UUID, dangerPostID: UUID) {
+    self.init()
+    
+      // computed
+    self.$user.id = userID
+    self.$dangerPost.id = dangerPostID
+  }
 }

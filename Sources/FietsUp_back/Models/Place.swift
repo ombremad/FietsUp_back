@@ -31,7 +31,7 @@ final class Place: Model, @unchecked Sendable {
   convenience init(from dto: CreatePlaceDTO) {
     self.init()
     
-    // user provided
+      // user provided
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
     self.address = dto.address?.trimmingCharacters(in: .whitespacesAndNewlines)
     self.zipCode = dto.zipCode?.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -18,7 +18,7 @@ final class PlaceCategory: Model, @unchecked Sendable {
   convenience init(from dto: CreatePlaceCategoryDTO) {
     self.init()
     
-    // user provided
+      // user provided
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
     self.iconName = dto.iconName
   }

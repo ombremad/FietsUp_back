@@ -11,4 +11,12 @@ final class ForumPostFav: Model, @unchecked Sendable {
   @Parent(key: "id_forum_post") var forumPost: ForumPost
 
   init() {}
+  
+  convenience init(userID: UUID, forumPostID: UUID) {
+    self.init()
+    
+      // computed
+    self.$user.id = userID
+    self.$forumPost.id = forumPostID
+  }
 }
