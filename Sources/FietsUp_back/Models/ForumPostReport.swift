@@ -7,7 +7,7 @@ final class ForumPostReport: Model, @unchecked Sendable {
 
   @ID(key: .id) var id: UUID?
 
-  @Field(key: "details") var details: String
+  @OptionalField(key: "details") var details: String?
   @OptionalField(key: "process_details") var processDetails: String?
   @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
   @OptionalField(key: "process_date") var processDate: Date?
@@ -26,7 +26,9 @@ final class ForumPostReport: Model, @unchecked Sendable {
     self.$forumPost.id = forumPostID
     
       // user provided
-    self.details = dto.details.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let details = dto.details {
+      self.details = details.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
     self.$moderationCategory.id = dto.categoryID
   }
 }

@@ -42,7 +42,6 @@ struct ForumPostReportController: RouteCollection {
   
   @Sendable
   func create(req: Request) async throws -> GetForumPostReportDTO {
-    try CreateForumPostReportDTO.validate(content: req)
     let dto = try req.content.decode(CreateForumPostReportDTO.self)
     let userID = try await req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)

@@ -7,7 +7,7 @@ final class DangerCommentReport: Model, @unchecked Sendable {
 
   @ID(key: .id) var id: UUID?
 
-  @Field(key: "details") var details: String
+  @OptionalField(key: "details") var details: String?
   @OptionalField(key: "process_details") var processDetails: String?
   @Field(key: "creation_date") var creationDate: Date
   @OptionalField(key: "process_date") var processDate: Date?

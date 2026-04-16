@@ -9,7 +9,7 @@ import Vapor
 
 struct GetForumPostReportDTO: Content {
   var id: UUID
-  var details: String
+  var details: String?
   var processDetails: String?
   var creationDate: Date?
   var processDate: Date?
