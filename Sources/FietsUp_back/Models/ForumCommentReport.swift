@@ -12,7 +12,7 @@ final class ForumCommentReport: Model, @unchecked Sendable {
   @Field(key: "creation_date") var creationDate: Date
   @OptionalField(key: "process_date") var processDate: Date?
 
-  @Parent(key: "id_forum_comment") var forumComment: ForumComment
+  @OptionalParent(key: "id_forum_comment") var forumComment: ForumComment?
   @Parent(key: "id_user") var user: User
   @Parent(key: "id_moderation_category") var moderationCategory: ModerationCategory
 

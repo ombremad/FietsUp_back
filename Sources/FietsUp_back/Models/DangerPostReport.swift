@@ -12,7 +12,7 @@ final class DangerPostReport: Model, @unchecked Sendable {
   @Field(key: "creation_date") var creationDate: Date
   @OptionalField(key: "process_date") var processDate: Date?
 
-  @Parent(key: "id_danger_post") var dangerPost: DangerPost
+  @OptionalParent(key: "id_danger_post") var dangerPost: DangerPost?
   @Parent(key: "id_user") var user: User
   @Parent(key: "id_moderation_category") var moderationCategory: ModerationCategory
 
