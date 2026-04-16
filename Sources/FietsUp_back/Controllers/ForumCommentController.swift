@@ -74,14 +74,14 @@ struct ForumCommentController: RouteCollection {
     let comment = ForumComment(from: dto, userID: userID, forumPostID: forumPostID)
     try await comment.save(on: req.db)
     
-    return try await GetForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
   }
   
   @Sendable
   func like(req: Request) async throws -> GetForumPostDTO {
     let userID = try await req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
-    guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "Forum comment not found") }
+    guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "ForumComment not found") }
     
     let forumPostID = forumComment.$forumPost.id
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
@@ -97,14 +97,14 @@ struct ForumCommentController: RouteCollection {
       try await newLike.save(on: req.db)
     }
 
-    return try await GetForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
   }
   
   @Sendable
   func fav(req: Request) async throws -> GetForumPostDTO {
     let userID = try await req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
-    guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "Forum comment not found") }
+    guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "ForumComment not found") }
     
     let forumPostID = forumComment.$forumPost.id
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
@@ -120,7 +120,7 @@ struct ForumCommentController: RouteCollection {
       try await newFav.save(on: req.db)
     }
     
-    return try await GetForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
   }
   
   @Sendable
@@ -134,7 +134,7 @@ struct ForumCommentController: RouteCollection {
     comment.patch(with: dto)
     try await comment.save(on: req.db)
     
-    return try await buildForumCommentDTO(forumCommentID: commentID, userID: userID, on: req.db)
+    return try await populateForumCommentDTO(from: comment, userID: userID, on: req.db)
   }
   
   @Sendable
@@ -151,38 +151,6 @@ struct ForumCommentController: RouteCollection {
       .filter(\.$id == id)
       .with(\.$user)
       .first()
-    
     return try returnOrFail(comment)
   }
-  
-  private func buildForumCommentDTO(forumCommentID: UUID, userID: UUID, on db: any Database) async throws -> GetForumCommentDTO {
-    async let comment = try await findForumComment(id: forumCommentID, on: db)
-    async let likeCount = try await getLikeCount(forumCommentID: forumCommentID, on: db)
-    async let likedByUser = try await getLikedByUser(forumCommentID: forumCommentID, userID: userID, on: db)
-    async let favedByUser = try await getFavedByUser(forumCommentID: forumCommentID, userID: userID, on: db)
-    return try await GetForumCommentDTO(from: comment, likeCount: likeCount, likedByUser: likedByUser, favedByUser: favedByUser)
-  }
-  
-  private func getLikeCount(forumCommentID: UUID, on db: any Database) async throws -> Int {
-    return try await ForumCommentLike.query(on: db)
-      .filter(\.$forumComment.$id == forumCommentID)
-      .count()
-  }
-  
-  private func getLikedByUser(forumCommentID: UUID, userID: UUID, on db: any Database) async throws -> Bool {
-    let likedByUser = try await ForumCommentLike.query(on: db)
-      .filter(\.$forumComment.$id == forumCommentID)
-      .filter(\.$user.$id == userID)
-      .count()
-    return likedByUser > 0
-  }
-  
-  private func getFavedByUser(forumCommentID: UUID, userID: UUID, on db: any Database) async throws -> Bool {
-    let favedByUser = try await ForumCommentFav.query(on: db)
-      .filter(\.$forumComment.$id == forumCommentID)
-      .filter(\.$user.$id == userID)
-      .count()
-    return favedByUser > 0
-  }
-
 }

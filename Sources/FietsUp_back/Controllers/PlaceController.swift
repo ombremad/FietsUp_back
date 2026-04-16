@@ -104,15 +104,11 @@ struct PlaceController: RouteCollection {
   }
   
   private func find(id: UUID, on db: any Database) async throws -> Place {
-    guard
-      let place = try await Place.query(on: db)
-        .filter(\.$id == id)
-        .with(\.$categories)
-        .first()
-    else {
-      throw Abort(.notFound)
-    }
-    return place
+    let place = try await Place.query(on: db)
+      .filter(\.$id == id)
+      .with(\.$categories)
+      .first()
+    return try returnOrFail(place)
   }
 
 }

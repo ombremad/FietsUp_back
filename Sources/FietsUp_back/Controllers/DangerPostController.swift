@@ -87,37 +87,28 @@ struct DangerPostController: RouteCollection {
     try CreateDangerPostDTO.validate(content: req)
     let dto = try req.content.decode(CreateDangerPostDTO.self)
     
-    let user = try await req.requireUser()
-    let userID = try user.requireID()
+    let userID = try await req.requireUser().requireID()
     let dangerCategoryID = try req.parameters.require("dangerCategoryID", as: UUID.self)
     
     guard try await DangerCategory.find(dangerCategoryID, on: req.db) != nil else {
-      throw Abort(.notFound, reason: "Danger category not found")
+      throw Abort(.notFound, reason: "DangerCategory not found")
     }
     
     let post = DangerPost(from: dto, userID: userID, dangerCategoryID: dangerCategoryID)
     try await post.save(on: req.db)
     
-    let postID = try post.requireID()
-    return try GetDangerPostDTO(from: try await findDangerPost(id: postID, on: req.db))
+    return try await populateDangerPostDTO(from: post, userID: userID, on: req.db)
   }
   
   @Sendable
   func like(req: Request) async throws -> GetDangerPostDTO {
-    let user = try await req.requireUser()
-    let userID = try user.requireID()
-    
+    let userID = try await req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
-    
-    guard try await DangerPost.find(dangerPostID, on: req.db) != nil else {
-      throw Abort(.notFound, reason: "Danger post not found")
-    }
     
     let existingLike = try await DangerPostLike.query(on: req.db)
       .filter(\.$user.$id == userID)
       .filter(\.$dangerPost.$id == dangerPostID)
       .first()
-    
     if let existingLike {
       try await existingLike.delete(on: req.db)
     } else {
@@ -125,25 +116,19 @@ struct DangerPostController: RouteCollection {
       try await newLike.save(on: req.db)
     }
     
-    return try GetDangerPostDTO(from: try await findDangerPost(id: dangerPostID, on: req.db))
+    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
+    return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
   }
   
   @Sendable
   func fav(req: Request) async throws -> GetDangerPostDTO {
-    let user = try await req.requireUser()
-    let userID = try user.requireID()
-    
+    let userID = try await req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
-    
-    guard try await DangerPost.find(dangerPostID, on: req.db) != nil else {
-      throw Abort(.notFound, reason: "Danger post not found")
-    }
     
     let existingFav = try await DangerPostFav.query(on: req.db)
       .filter(\.$user.$id == userID)
       .filter(\.$dangerPost.$id == dangerPostID)
       .first()
-    
     if let existingFav {
       try await existingFav.delete(on: req.db)
     } else {
@@ -151,7 +136,8 @@ struct DangerPostController: RouteCollection {
       try await newFav.save(on: req.db)
     }
     
-    return try GetDangerPostDTO(from: try await findDangerPost(id: dangerPostID, on: req.db))
+    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
+    return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
   }
   
   @Sendable
@@ -171,21 +157,24 @@ struct DangerPostController: RouteCollection {
   
   @Sendable
   func getByID(req: Request) async throws -> GetDangerPostDTO {
-    let postID = try req.parameters.require("dangerPostID", as: UUID.self)
-    let post = try await findDangerPost(id: postID, on: req.db)
-    return try GetDangerPostDTO(from: post)
+    let userID = try await req.requireUser().requireID()
+    let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
+    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
+    return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
   }
   
   @Sendable
   func patchByID(req: Request) async throws -> GetDangerPostDTO {
-    let postID = try req.parameters.require("dangerPostID", as: UUID.self)
-    let post = try await findDangerPost(id: postID, on: req.db)
+    let userID = try await req.requireUser().requireID()
+    let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
+    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     
     try PatchDangerPostDTO.validate(content: req)
     let dto = try req.content.decode(PatchDangerPostDTO.self)
-    post.patch(with: dto)
-    try await post.save(on: req.db)
-    return try GetDangerPostDTO(from: post)
+    dangerPost.patch(with: dto)
+    try await dangerPost.save(on: req.db)
+    
+    return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
   }
   
   @Sendable

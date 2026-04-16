@@ -16,7 +16,7 @@ func findDangerPost(id: UUID, on db: any Database) async throws -> DangerPost {
     .with(\.$dangerComments) { $0.with(\.$user) }
   
   guard let post = try await query.first() else {
-    throw Abort(.notFound)
+    throw Abort(.notFound, reason: "DangerPost not found")
   }
   
   post.$dangerComments.value = post.$dangerComments.value?

@@ -118,8 +118,7 @@ struct UserController: RouteCollection {
     try LoginUserDTO.validate(content: req)
     let userData = try req.content.decode(LoginUserDTO.self)
 
-    guard
-      let user = try await User.query(on: req.db)
+    guard let user = try await User.query(on: req.db)
         .filter(\.$email == userData.email)
         .first()
     else {
@@ -183,14 +182,10 @@ struct UserController: RouteCollection {
   }
 
   private func findUser(id: UUID, on db: any Database) async throws -> User {
-    guard
-      let user = try await User.query(on: db)
-        .filter(\.$id == id)
-        .first()
-    else {
-      throw Abort(.notFound)
-    }
-    return user
+    let user = try await User.query(on: db)
+      .filter(\.$id == id)
+      .first()
+    return try returnOrFail(user)
   }
 
   private func patchUser(_ user: User, req: Request) async throws -> GetUserDTO {

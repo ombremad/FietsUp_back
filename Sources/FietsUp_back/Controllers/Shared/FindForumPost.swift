@@ -16,7 +16,7 @@ func findForumPost(id: UUID, on db: any Database) async throws -> ForumPost {
     .with(\.$forumComments) { $0.with(\.$user) }
   
   guard let post = try await query.first() else {
-    throw Abort(.notFound)
+    throw Abort(.notFound, reason: "ForumPost not found")
   }
   
   post.$forumComments.value = post.$forumComments.value?

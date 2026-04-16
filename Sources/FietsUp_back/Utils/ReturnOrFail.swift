@@ -9,7 +9,8 @@ import Vapor
 
 func returnOrFail<T>(_ value: T?) throws -> T {
   guard let value else {
-    throw Abort(.notFound)
+    let type = String(describing: T.self)
+    throw Abort(.notFound, reason: type + " not found")
   }
   return value
 }

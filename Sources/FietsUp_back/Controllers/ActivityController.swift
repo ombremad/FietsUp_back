@@ -82,7 +82,7 @@ struct ActivityController: RouteCollection {
     let user = try await req.requireUser()
     let userID = try user.requireID()
     guard activity.$user.id == userID else {
-      throw Abort(.notFound)
+      throw Abort(.notFound, reason: "Activity not found")
     }
     
     try await activity.delete(on: req.db)
@@ -90,13 +90,9 @@ struct ActivityController: RouteCollection {
   }
   
   private func find(id: UUID, on db: any Database) async throws -> Activity {
-    guard
-      let activity = try await Activity.query(on: db)
-        .filter(\.$id == id)
-        .first()
-    else {
-      throw Abort(.notFound)
-    }
-    return activity
+    let activity = try await Activity.query(on: db)
+      .filter(\.$id == id)
+      .first()
+    return try returnOrFail(activity)
   }
 }

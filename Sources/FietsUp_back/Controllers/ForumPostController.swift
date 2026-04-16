@@ -83,13 +83,13 @@ struct ForumPostController: RouteCollection {
     let forumCategoryID = try req.parameters.require("forumCategoryID", as: UUID.self)
 
     guard try await ForumCategory.find(forumCategoryID, on: req.db) != nil else {
-      throw Abort(.notFound, reason: "Forum category not found")
+      throw Abort(.notFound, reason: "ForumCategory not found")
     }
     
     let post = ForumPost(from: dto, userID: userID, forumCategoryID: forumCategoryID)
     try await post.save(on: req.db)
     
-    return try await GetForumPostDTO(from: post, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: post, userID: userID, on: req.db)
   }
   
   @Sendable
@@ -109,7 +109,7 @@ struct ForumPostController: RouteCollection {
     }
     
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
-    return try await GetForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
   }
   
   @Sendable
@@ -129,7 +129,7 @@ struct ForumPostController: RouteCollection {
     }
     
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
-    return try await GetForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
   }
     
   @Sendable
@@ -137,7 +137,7 @@ struct ForumPostController: RouteCollection {
     let userID = try await req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
-    return try await GetForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
   }
   
   @Sendable
@@ -151,7 +151,7 @@ struct ForumPostController: RouteCollection {
     forumPost.patch(with: dto)
     try await forumPost.save(on: req.db)
     
-    return try await GetForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
   }
   
   @Sendable

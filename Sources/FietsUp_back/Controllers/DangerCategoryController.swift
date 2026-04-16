@@ -83,13 +83,9 @@ struct DangerCategoryController: RouteCollection {
   }
   
   private func find(id: UUID, on db: any Database) async throws -> DangerCategory {
-    guard
-      let category = try await DangerCategory.query(on: db)
-        .filter(\.$id == id)
-        .first()
-    else {
-      throw Abort(.notFound)
-    }
-    return category
+    let category = try await DangerCategory.query(on: db)
+      .filter(\.$id == id)
+      .first()
+    return try returnOrFail(category)
   }
 }

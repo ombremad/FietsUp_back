@@ -21,20 +21,8 @@ struct GetForumPostDTO: Content {
 }
 
 extension GetForumPostDTO {
-  init(from model: ForumPost, userID: UUID, on db: any Database) async throws {
+  init(from model: ForumPost, likeCount: Int, likedByUser: Bool, favedByUser: Bool, commentsDTOs: [GetForumCommentDTO]) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
-    
-    async let likeCount = ForumPostLike.query(on: db)
-      .filter(\.$forumPost.$id == id)
-      .count()
-    async let likedByUser = ForumPostLike.query(on: db)
-      .filter(\.$forumPost.$id == id)
-      .filter(\.$user.$id == userID)
-      .count()
-    async let favedByUser = ForumPostFav.query(on: db)
-      .filter(\.$forumPost.$id == id)
-      .filter(\.$user.$id == userID)
-      .count()
     
     self.init(
       id: id,
@@ -42,12 +30,35 @@ extension GetForumPostDTO {
       content: model.content,
       user: try GetUserShortDTO(from: model.user),
       creationDate: model.creationDate,
-      likeCount: try await likeCount,
-      likedByUser: try await likedByUser > 0,
-      favedByUser: try await favedByUser > 0,
-      
-      // TODO: actually populate comments counts
-      comments: try model.forumComments.map { try GetForumCommentDTO(from: $0, likeCount: 0, likedByUser: false, favedByUser: false) }
+      likeCount: likeCount,
+      likedByUser: likedByUser,
+      favedByUser: favedByUser,
+      comments: commentsDTOs
     )
   }
+}
+
+func populateForumPostDTO(from forumPost: ForumPost, userID: UUID, on db: any Database) async throws -> GetForumPostDTO {
+  
+  async let likeCount = ForumPostLike.query(on: db)
+    .filter(\.$forumPost.$id == forumPost.requireID())
+    .count()
+  
+  async let likedByUser = (
+    ForumPostLike.query(on: db)
+      .filter(\.$forumPost.$id == forumPost.requireID())
+      .filter(\.$user.$id == userID)
+      .count()
+  ) > 0
+  
+  async let favedByUser = (
+    ForumPostFav.query(on: db)
+      .filter(\.$forumPost.$id == forumPost.requireID())
+      .filter(\.$user.$id == userID)
+      .count()
+  ) > 0
+  
+  async let commentsDTOs = try await populateForumCommentsDTOs(from: forumPost.forumComments, userID: userID, on: db)
+  
+  return try await GetForumPostDTO(from: forumPost, likeCount: likeCount, likedByUser: likedByUser, favedByUser: favedByUser, commentsDTOs: commentsDTOs)
 }

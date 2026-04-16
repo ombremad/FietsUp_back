@@ -146,7 +146,7 @@ struct ForumCategoryController: RouteCollection {
       .with(\.$forumPosts) { $0.with(\.$user) }
     
     guard let category = try await query.first() else {
-      throw Abort(.notFound)
+      throw Abort(.notFound, reason: "ForumCategory not found")
     }
     
     category.$forumPosts.value = category.$forumPosts.value?

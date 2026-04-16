@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import Fluent
 
 struct GetDangerPostDTO: Content {
   var id: UUID
@@ -16,11 +17,14 @@ struct GetDangerPostDTO: Content {
   var user: GetUserShortDTO
   var creationDate: Date?
   var dangerCategory: GetDangerCategoryDTO
+  var likeCount: Int
+  var likedByUser: Bool
+  var favedByUser: Bool
   var comments: [GetDangerCommentDTO]
 }
 
 extension GetDangerPostDTO {
-  init(from model: DangerPost) throws {
+  init(from model: DangerPost, likeCount: Int, likedByUser: Bool, favedByUser: Bool, commentsDTOs: [GetDangerCommentDTO]) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
     
     self.init(
@@ -32,7 +36,35 @@ extension GetDangerPostDTO {
       user: try GetUserShortDTO(from: model.user),
       creationDate: model.creationDate,
       dangerCategory: try GetDangerCategoryDTO(from: model.dangerCategory),
-      comments: try model.dangerComments.map { try GetDangerCommentDTO(from: $0) }
+      likeCount: likeCount,
+      likedByUser: likedByUser,
+      favedByUser: favedByUser,
+      comments: commentsDTOs
     )
   }
+}
+
+func populateDangerPostDTO(from dangerPost: DangerPost, userID: UUID, on db: any Database) async throws -> GetDangerPostDTO {
+  
+  async let likeCount = DangerPostLike.query(on: db)
+    .filter(\.$dangerPost.$id == dangerPost.requireID())
+    .count()
+  
+  async let likedByUser = (
+    DangerPostLike.query(on: db)
+      .filter(\.$dangerPost.$id == dangerPost.requireID())
+      .filter(\.$user.$id == userID)
+      .count()
+  ) > 0
+  
+  async let favedByUser = (
+    DangerPostFav.query(on: db)
+      .filter(\.$dangerPost.$id == dangerPost.requireID())
+      .filter(\.$user.$id == userID)
+      .count()
+  ) > 0
+  
+  async let commentsDTOs = try await populateDangerCommentsDTOs(from: dangerPost.dangerComments, userID: userID, on: db)
+  
+  return try await GetDangerPostDTO(from: dangerPost, likeCount: likeCount, likedByUser: likedByUser, favedByUser: favedByUser, commentsDTOs: commentsDTOs)
 }
