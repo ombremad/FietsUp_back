@@ -1,16 +1,19 @@
 //
-//  GetUserSummaryDTO.swift
+//  GetUserShortDTO.swift
 //  FietsUp_back
 //
-//  Created by Anne Ferret on 26/03/2026.
+//  Created by Anne Ferret on 17/04/2026.
 //
 
 import Vapor
 
 struct GetUserShortDTO: Content {
   var id: UUID
+  var firstName: String
+  var lastName: String
   var nickname: String
-  var streak: Int
+  var email: String
+  var creationDate: Date?
 }
 
 extension GetUserShortDTO {
@@ -19,8 +22,11 @@ extension GetUserShortDTO {
     
     self.init(
       id: id,
+      firstName: model.firstName,
+      lastName: model.lastName,
       nickname: model.nickname,
-      streak: model.streak,
+      email: model.email,
+      creationDate: model.creationDate
     )
   }
 }

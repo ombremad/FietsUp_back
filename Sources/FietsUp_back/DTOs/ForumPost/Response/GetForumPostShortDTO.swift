@@ -11,7 +11,7 @@ struct GetForumPostShortDTO: Content {
   var id: UUID
   var title: String
   var content: String
-  var user: GetUserShortDTO
+  var user: GetUserPublicDTO
   var creationDate: Date?
 }
 
@@ -23,7 +23,7 @@ extension GetForumPostShortDTO {
       id: id,
       title: model.title,
       content: model.content,
-      user: try GetUserShortDTO(from: model.user),
+      user: try GetUserPublicDTO(from: model.user),
       creationDate: model.creationDate
     )
   }

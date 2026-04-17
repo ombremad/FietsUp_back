@@ -14,7 +14,7 @@ struct GetDangerPostReportDTO: Content {
   var creationDate: Date?
   var processDate: Date?
   var dangerPost: GetDangerPostShortDTO?
-  var user: GetUserShortDTO
+  var user: GetUserPublicDTO
   var category: GetModerationCategoryDTO
 }
 
@@ -29,7 +29,7 @@ extension GetDangerPostReportDTO {
       creationDate: model.creationDate,
       processDate: model.processDate,
       dangerPost: try model.dangerPost.map { try GetDangerPostShortDTO(from: $0) },
-      user: try GetUserShortDTO(from: model.user),
+      user: try GetUserPublicDTO(from: model.user),
       category: try GetModerationCategoryDTO(from: model.moderationCategory)
     )
   }

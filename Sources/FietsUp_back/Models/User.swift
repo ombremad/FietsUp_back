@@ -12,11 +12,12 @@ final class User: Model, @unchecked Sendable {
   @Field(key: "nickname") var nickname: String
   @Field(key: "email") var email: String
   @Field(key: "password") var password: String
-  @Field(key: "creation_date") var creationDate: Date
+  @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
   @OptionalField(key: "ban_end_date") var banEndDate: Date?
   @Field(key: "admin_rights") var adminRights: Int
   @OptionalField(key: "bio") var bio: String?
   @Field(key: "streak") var streak: Int
+  @Field(key: "total_elapsed_distance") var totalElapsedDistance: Int
 
   @OptionalParent(key: "id_cycle_type") var cycleType: CycleType?
   @OptionalParent(key: "id_cycle_color") var cycleColor: CycleColor?
@@ -71,10 +72,9 @@ final class User: Model, @unchecked Sendable {
     self.bio = dto.bio
 
       // defaults
-    self.creationDate = .now
-    self.banEndDate = nil
     self.adminRights = 0
     self.streak = 0
+    self.totalElapsedDistance = 0
   }
 }
 

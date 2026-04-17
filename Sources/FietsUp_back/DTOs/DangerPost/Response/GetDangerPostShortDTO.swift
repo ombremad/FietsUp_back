@@ -14,7 +14,7 @@ struct GetDangerPostShortDTO: Content {
   var content: String
   var latitude: Double
   var longitude: Double
-  var user: GetUserShortDTO
+  var user: GetUserPublicDTO
   var creationDate: Date?
   var dangerCategory: GetDangerCategoryDTO
 }
@@ -29,7 +29,7 @@ extension GetDangerPostShortDTO {
       content: model.content,
       latitude: model.latitude,
       longitude: model.longitude,
-      user: try GetUserShortDTO(from: model.user),
+      user: try GetUserPublicDTO(from: model.user),
       creationDate: model.creationDate,
       dangerCategory: try GetDangerCategoryDTO(from: model.dangerCategory)
     )

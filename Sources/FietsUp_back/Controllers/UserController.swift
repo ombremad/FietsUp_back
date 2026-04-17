@@ -27,7 +27,7 @@ struct UserController: RouteCollection {
         summary: "Signup",
         description: "Create a new user",
         body: .type(CreateUserDTO.self),
-        response: .type(GetUserDTO.self)
+        response: .type(GetUserShortDTO.self)
       )
       .openAPINoAuth()
 
@@ -46,7 +46,7 @@ struct UserController: RouteCollection {
         tags: "Users",
         summary: "List",
         description: "List all existing users",
-        response: .type([GetUserDTO].self)
+        response: .type([GetUserShortDTO].self)
       )
 
     adminProtected.get(":userID", use: self.getByID)
@@ -93,24 +93,16 @@ struct UserController: RouteCollection {
         body: .type(PatchUserDTO.self),
         response: .type(GetUserDTO.self)
       )
-
-    userProtected.delete("me", use: self.deleteMe)
-      .openAPI(
-        tags: "Users", "me",
-        summary: "Delete me",
-        description: "Permanently delete current user",
-        response: .type(HTTPStatus.self)
-      )
   }
 
   @Sendable
-  func create(req: Request) async throws -> GetUserDTO {
+  func create(req: Request) async throws -> GetUserShortDTO {
     try CreateUserDTO.validate(content: req)
     let dto = try req.content.decode(CreateUserDTO.self)
 
     let user = try User(from: dto)
     try await user.save(on: req.db)
-    return try GetUserDTO(from: user)
+    return try GetUserShortDTO(from: user)
   }
 
   @Sendable
@@ -135,11 +127,11 @@ struct UserController: RouteCollection {
   }
 
   @Sendable
-  func getAll(req: Request) async throws -> [GetUserDTO] {
+  func getAll(req: Request) async throws -> [GetUserShortDTO] {
     try await User.query(on: req.db)
       .sort(\.$email)
       .all()
-      .map { user in try GetUserDTO(from: user) }
+      .map { user in try GetUserShortDTO(from: user) }
   }
 
   @Sendable
@@ -172,12 +164,6 @@ struct UserController: RouteCollection {
   func deleteByID(req: Request) async throws -> HTTPStatus {
     let userID = try req.parameters.require("userID", as: UUID.self)
     let user = try await findUser(id: userID, on: req.db)
-    return try await deleteUser(user, on: req.db)
-  }
-
-  @Sendable
-  func deleteMe(req: Request) async throws -> HTTPStatus {
-    let user = try await req.requireUser()
     return try await deleteUser(user, on: req.db)
   }
 

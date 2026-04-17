@@ -11,7 +11,7 @@ import Fluent
 struct GetDangerCommentShortDTO: Content {
   var id: UUID
   var content: String
-  var user: GetUserShortDTO
+  var user: GetUserPublicDTO
   var creationDate: Date?
 }
 
@@ -22,7 +22,7 @@ extension GetDangerCommentShortDTO {
     self.init(
       id: id,
       content: model.content,
-      user: try GetUserShortDTO(from: model.user),
+      user: try GetUserPublicDTO(from: model.user),
       creationDate: model.creationDate
     )
   }

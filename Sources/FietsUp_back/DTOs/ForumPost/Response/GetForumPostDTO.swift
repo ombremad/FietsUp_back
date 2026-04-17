@@ -12,7 +12,7 @@ struct GetForumPostDTO: Content {
   var id: UUID
   var title: String
   var content: String
-  var user: GetUserShortDTO
+  var user: GetUserPublicDTO
   var creationDate: Date?
   var likeCount: Int
   var likedByUser: Bool
@@ -28,7 +28,7 @@ extension GetForumPostDTO {
       id: id,
       title: model.title,
       content: model.content,
-      user: try GetUserShortDTO(from: model.user),
+      user: try GetUserPublicDTO(from: model.user),
       creationDate: model.creationDate,
       likeCount: likeCount,
       likedByUser: likedByUser,

@@ -13,6 +13,10 @@ struct PlaceController: RouteCollection {
     
     let request = routes.grouped("places")
     
+    let userProtected = request
+      .grouped(JWTMiddleware())
+      .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
+    
     let adminProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
@@ -24,6 +28,14 @@ struct PlaceController: RouteCollection {
         description: "Create a place",
         body: .type(CreatePlaceDTO.self),
         response: .type(GetPlaceDTO.self)
+      )
+    
+    userProtected.get("near", use: self.getNearest)
+      .openAPI(
+        tags: "Places",
+        summary: "Near",
+        description: "Get nearest places sorted",
+        response: .type([GetPlaceDTO].self)
       )
     
     adminProtected.get(use: self.getAll)
@@ -52,8 +64,6 @@ struct PlaceController: RouteCollection {
         path: .type(UUID.self),
         response: .type(HTTPStatus.self)
       )
-    
-    // TODO: get userProtected closest places
   }
 
   @Sendable
@@ -70,6 +80,12 @@ struct PlaceController: RouteCollection {
     try await place.$categories.attach(categories, on: req.db)
     try await place.$categories.load(on: req.db)
     return try GetPlaceDTO(from: place)
+  }
+  
+  @Sendable
+  func getNearest(req: Request) async throws -> [GetPlaceDTO] {
+    // TODO: get closest places with sql raw CALL get_closest_places(48.5734, 7.7521, 5000, 20); where values are latitude, longitude, radius in meters, and max results
+    return [];
   }
   
   @Sendable

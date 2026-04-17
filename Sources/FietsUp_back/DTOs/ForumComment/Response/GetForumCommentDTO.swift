@@ -12,7 +12,7 @@ import SQLKit
 struct GetForumCommentDTO: Content {
   var id: UUID
   var content: String
-  var user: GetUserShortDTO
+  var user: GetUserPublicDTO
   var creationDate: Date?
   var likeCount: Int
   var likedByUser: Bool
@@ -26,7 +26,7 @@ extension GetForumCommentDTO {
     self.init(
       id: id,
       content: model.content,
-      user: try GetUserShortDTO(from: model.user),
+      user: try GetUserPublicDTO(from: model.user),
       creationDate: model.creationDate,
       likeCount: likeCount,
       likedByUser: likedByUser,
