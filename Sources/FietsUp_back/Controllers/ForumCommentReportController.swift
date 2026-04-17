@@ -26,7 +26,7 @@ struct ForumCommentReportController: RouteCollection {
         tags: "Reports", "Forum", "Comments",
         summary: "Create",
         description: "Create a forum comment report",
-        body: .type(CreateForumCommentReportDTO.self),
+        body: .type(CreateReportDTO.self),
         response: .type(GetForumCommentReportDTO.self)
       )
     
@@ -43,14 +43,14 @@ struct ForumCommentReportController: RouteCollection {
         tags: "Reports", "Forum", "Comments",
         summary: "Process",
         description: "Mark a forum comment report as processed by a moderator",
-        body: .type(ProcessForumCommentReportDTO.self),
+        body: .type(ProcessReportDTO.self),
         response: .type(GetForumCommentReportDTO.self)
       )
   }
   
   @Sendable
   func create(req: Request) async throws -> GetForumCommentReportDTO {
-    let dto = try req.content.decode(CreateForumCommentReportDTO.self)
+    let dto = try req.content.decode(CreateReportDTO.self)
     let userID = try await req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
     
@@ -79,8 +79,8 @@ struct ForumCommentReportController: RouteCollection {
   
   @Sendable
   func process(req: Request) async throws -> GetForumCommentReportDTO {
-    try ProcessForumCommentReportDTO.validate(content: req)
-    let dto = try req.content.decode(ProcessForumCommentReportDTO.self)
+    try ProcessReportDTO.validate(content: req)
+    let dto = try req.content.decode(ProcessReportDTO.self)
     let reportID = try req.parameters.require("reportID", as: UUID.self)
     
     guard let report = try await ForumCommentReport.find(reportID, on: req.db) else {

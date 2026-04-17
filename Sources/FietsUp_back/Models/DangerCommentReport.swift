@@ -18,7 +18,7 @@ final class DangerCommentReport: Model, @unchecked Sendable {
 
   init() {}
   
-  convenience init(from dto: CreateDangerCommentReportDTO, userID: UUID, dangerCommentID: UUID) {
+  convenience init(from dto: CreateReportDTO, userID: UUID, dangerCommentID: UUID) {
     self.init()
     
       // computed
@@ -34,7 +34,7 @@ final class DangerCommentReport: Model, @unchecked Sendable {
 }
 
 extension DangerCommentReport {
-  func process(with dto: ProcessDangerCommentReportDTO) {
+  func process(with dto: ProcessReportDTO) {
     processDetails = dto.details.trimmingCharacters(in: .whitespacesAndNewlines)
     processDate = .now
   }

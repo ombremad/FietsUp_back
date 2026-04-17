@@ -18,7 +18,7 @@ final class ForumPostReport: Model, @unchecked Sendable {
 
   init() {}
   
-  convenience init(from dto: CreateForumPostReportDTO, userID: UUID, forumPostID: UUID) {
+  convenience init(from dto: CreateReportDTO, userID: UUID, forumPostID: UUID) {
     self.init()
     
       // computed
@@ -34,7 +34,7 @@ final class ForumPostReport: Model, @unchecked Sendable {
 }
 
 extension ForumPostReport {
-  func process(with dto: ProcessForumPostReportDTO) {
+  func process(with dto: ProcessReportDTO) {
     processDetails = dto.details.trimmingCharacters(in: .whitespacesAndNewlines)
     processDate = .now
   }

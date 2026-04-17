@@ -26,7 +26,7 @@ struct DangerPostReportController: RouteCollection {
         tags: "Reports", "Dangers", "Posts",
         summary: "Create",
         description: "Create a danger post report",
-        body: .type(CreateDangerPostReportDTO.self),
+        body: .type(CreateReportDTO.self),
         response: .type(GetDangerPostReportDTO.self)
       )
     
@@ -43,14 +43,14 @@ struct DangerPostReportController: RouteCollection {
         tags: "Reports", "Dangers", "Posts",
         summary: "Process",
         description: "Mark a danger post report as processed by a moderator",
-        body: .type(ProcessDangerPostReportDTO.self),
+        body: .type(ProcessReportDTO.self),
         response: .type(GetDangerPostReportDTO.self)
       )
   }
   
   @Sendable
   func create(req: Request) async throws -> GetDangerPostReportDTO {
-    let dto = try req.content.decode(CreateDangerPostReportDTO.self)
+    let dto = try req.content.decode(CreateReportDTO.self)
     let userID = try await req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     
@@ -79,8 +79,8 @@ struct DangerPostReportController: RouteCollection {
   
   @Sendable
   func process(req: Request) async throws -> GetDangerPostReportDTO {
-    try ProcessDangerPostReportDTO.validate(content: req)
-    let dto = try req.content.decode(ProcessDangerPostReportDTO.self)
+    try ProcessReportDTO.validate(content: req)
+    let dto = try req.content.decode(ProcessReportDTO.self)
     let reportID = try req.parameters.require("reportID", as: UUID.self)
     
     guard let report = try await DangerPostReport.find(reportID, on: req.db) else {

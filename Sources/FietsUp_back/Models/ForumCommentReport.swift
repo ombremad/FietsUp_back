@@ -18,7 +18,7 @@ final class ForumCommentReport: Model, @unchecked Sendable {
 
   init() {}
   
-  convenience init(from dto: CreateForumCommentReportDTO, userID: UUID, forumCommentID: UUID) {
+  convenience init(from dto: CreateReportDTO, userID: UUID, forumCommentID: UUID) {
     self.init()
     
       // computed
@@ -34,7 +34,7 @@ final class ForumCommentReport: Model, @unchecked Sendable {
 }
 
 extension ForumCommentReport {
-  func process(with dto: ProcessForumCommentReportDTO) {
+  func process(with dto: ProcessReportDTO) {
     processDetails = dto.details.trimmingCharacters(in: .whitespacesAndNewlines)
     processDate = .now
   }

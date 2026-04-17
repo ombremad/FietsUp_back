@@ -26,7 +26,7 @@ struct ForumPostReportController: RouteCollection {
         tags: "Reports", "Forum", "Posts",
         summary: "Create",
         description: "Create a forum post report",
-        body: .type(CreateForumPostReportDTO.self),
+        body: .type(CreateReportDTO.self),
         response: .type(GetForumPostReportDTO.self)
       )
     
@@ -43,14 +43,14 @@ struct ForumPostReportController: RouteCollection {
         tags: "Reports", "Forum", "Posts",
         summary: "Process",
         description: "Mark a forum post report as processed by a moderator",
-        body: .type(ProcessForumPostReportDTO.self),
+        body: .type(ProcessReportDTO.self),
         response: .type(GetForumPostReportDTO.self)
       )
   }
   
   @Sendable
   func create(req: Request) async throws -> GetForumPostReportDTO {
-    let dto = try req.content.decode(CreateForumPostReportDTO.self)
+    let dto = try req.content.decode(CreateReportDTO.self)
     let userID = try await req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     
@@ -79,8 +79,8 @@ struct ForumPostReportController: RouteCollection {
   
   @Sendable
   func process(req: Request) async throws -> GetForumPostReportDTO {
-    try ProcessForumPostReportDTO.validate(content: req)
-    let dto = try req.content.decode(ProcessForumPostReportDTO.self)
+    try ProcessReportDTO.validate(content: req)
+    let dto = try req.content.decode(ProcessReportDTO.self)
     let reportID = try req.parameters.require("reportID", as: UUID.self)
     
     guard let report = try await ForumPostReport.find(reportID, on: req.db) else {
