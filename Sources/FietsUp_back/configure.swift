@@ -42,7 +42,7 @@ public func configure(_ app: Application) async throws {
   decoder.keyDecodingStrategy = .convertFromSnakeCase
   decoder.dateDecodingStrategy = .iso8601
   ContentConfiguration.global.use(decoder: decoder, for: .json)
-
+  
   // migrations and routes
   try routes(app)
 }

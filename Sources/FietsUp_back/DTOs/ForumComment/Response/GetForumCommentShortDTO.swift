@@ -1,0 +1,29 @@
+//
+//  GetForumCommentShortDTO.swift
+//  FietsUp_back
+//
+//  Created by Anne Ferret on 17/04/2026.
+//
+
+import Vapor
+import Fluent
+
+struct GetForumCommentShortDTO: Content {
+  var id: UUID
+  var content: String
+  var user: GetUserShortDTO
+  var creationDate: Date?
+}
+
+extension GetForumCommentShortDTO {
+  init(from model: ForumComment) throws {
+    guard let id = model.id else { throw Abort(.internalServerError) }
+    
+    self.init(
+      id: id,
+      content: model.content,
+      user: try GetUserShortDTO(from: model.user),
+      creationDate: model.creationDate
+    )
+  }
+}

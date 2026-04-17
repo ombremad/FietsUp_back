@@ -9,7 +9,7 @@ final class DangerPostReport: Model, @unchecked Sendable {
 
   @OptionalField(key: "details") var details: String?
   @OptionalField(key: "process_details") var processDetails: String?
-  @Field(key: "creation_date") var creationDate: Date
+  @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
   @OptionalField(key: "process_date") var processDate: Date?
 
   @OptionalParent(key: "id_danger_post") var dangerPost: DangerPost?
@@ -17,4 +17,25 @@ final class DangerPostReport: Model, @unchecked Sendable {
   @Parent(key: "id_moderation_category") var moderationCategory: ModerationCategory
 
   init() {}
+  
+  convenience init(from dto: CreateDangerPostReportDTO, userID: UUID, dangerPostID: UUID) {
+    self.init()
+    
+      // computed
+    self.$user.id = userID
+    self.$dangerPost.id = dangerPostID
+    
+      // user provided
+    if let details = dto.details {
+      self.details = details.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    self.$moderationCategory.id = dto.categoryID
+  }
+}
+
+extension DangerPostReport {
+  func process(with dto: ProcessDangerPostReportDTO) {
+    processDetails = dto.details.trimmingCharacters(in: .whitespacesAndNewlines)
+    processDate = .now
+  }
 }

@@ -30,6 +30,14 @@ struct ForumPostReportController: RouteCollection {
         response: .type(GetForumPostReportDTO.self)
       )
     
+    modProtected.get("pending", use: self.pending)
+      .openAPI(
+        tags: "Reports", "Forum", "Posts",
+        summary: "Index",
+        description: "See pending forum posts reports",
+        response: .type([GetForumPostReportDTO].self)
+      )
+    
     modProtected.patch("process", ":reportID", use: self.process)
       .openAPI(
         tags: "Reports", "Forum", "Posts",
@@ -54,6 +62,19 @@ struct ForumPostReportController: RouteCollection {
     try await report.save(on: req.db)
         
     return try GetForumPostReportDTO(from: await findReport(id: report.requireID(), on: req.db))
+  }
+  
+  @Sendable
+  func pending(req: Request) async throws -> [GetForumPostReportDTO] {
+    let pendingReports = try await ForumPostReport.query(on: req.db)
+      .filter(\.$processDate == nil)
+      .sort(\.$creationDate, .ascending)
+      .with(\.$forumPost, { $0.with(\.$user) })
+      .with(\.$user)
+      .with(\.$moderationCategory)
+      .all()
+    
+    return try pendingReports.map { try GetForumPostReportDTO(from: $0) }
   }
   
   @Sendable

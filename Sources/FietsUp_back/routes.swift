@@ -65,6 +65,9 @@ func routes(_ app: Application) throws {
   
   // feature: moderation & reports
   try app.register(collection: ModerationCategoryController())
+  try app.register(collection: DangerCommentReportController())
+  try app.register(collection: DangerPostReportController())
+  try app.register(collection: ForumCommentReportController())
   try app.register(collection: ForumPostReportController())
   
   // feature: places

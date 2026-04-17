@@ -9,7 +9,7 @@ final class ForumCommentReport: Model, @unchecked Sendable {
 
   @OptionalField(key: "details") var details: String?
   @OptionalField(key: "process_details") var processDetails: String?
-  @Field(key: "creation_date") var creationDate: Date
+  @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
   @OptionalField(key: "process_date") var processDate: Date?
 
   @OptionalParent(key: "id_forum_comment") var forumComment: ForumComment?
@@ -17,4 +17,25 @@ final class ForumCommentReport: Model, @unchecked Sendable {
   @Parent(key: "id_moderation_category") var moderationCategory: ModerationCategory
 
   init() {}
+  
+  convenience init(from dto: CreateForumCommentReportDTO, userID: UUID, forumCommentID: UUID) {
+    self.init()
+    
+      // computed
+    self.$user.id = userID
+    self.$forumComment.id = forumCommentID
+    
+      // user provided
+    if let details = dto.details {
+      self.details = details.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    self.$moderationCategory.id = dto.categoryID
+  }
+}
+
+extension ForumCommentReport {
+  func process(with dto: ProcessForumCommentReportDTO) {
+    processDetails = dto.details.trimmingCharacters(in: .whitespacesAndNewlines)
+    processDate = .now
+  }
 }
