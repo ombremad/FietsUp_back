@@ -15,4 +15,19 @@ final class CycleColor: Model, @unchecked Sendable {
   @Siblings(through: CycleColorOwnership.self, from: \.$cycleColor, to: \.$user) var owners: [User]
 
   init() {}
+  
+  convenience init(from dto: CreateCycleColorDTO) {
+    self.init()
+    
+      // user provided
+    self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    self.color = dto.color.lowercased()
+  }
+}
+
+extension CycleColor {
+  func patch(with dto: PatchCycleColorDTO) {
+    if let name = dto.name { self.name = name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    if let color = dto.color { self.color = color.lowercased() }
+  }
 }

@@ -53,6 +53,11 @@ func routes(_ app: Application) throws {
   // feature: activities
   try app.register(collection: ActivityController())
   
+  // feature: cycles
+  try app.register(collection: CycleColorController())
+  try app.register(collection: CycleDecorationController())
+  try app.register(collection: CycleTypeController())
+  
   // feature: dangers
   try app.register(collection: DangerPostController())
   try app.register(collection: DangerCategoryController())

@@ -16,4 +16,19 @@ final class CycleDecoration: Model, @unchecked Sendable {
   var owners: [User]
 
   init() {}
+  
+  convenience init(from dto: CreateCycleDecorationDTO) {
+    self.init()
+    
+      // user provided
+    self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    self.fileLink = dto.fileLink
+  }
+}
+
+extension CycleDecoration {
+  func patch(with dto: PatchCycleDecorationDTO) {
+    if let name = dto.name { self.name = name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    if let fileLink = dto.fileLink { self.fileLink = fileLink }
+  }
 }

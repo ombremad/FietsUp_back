@@ -15,4 +15,19 @@ final class CycleType: Model, @unchecked Sendable {
   @Siblings(through: CycleTypeOwnership.self, from: \.$cycleType, to: \.$user) var owners: [User]
 
   init() {}
+  
+  convenience init(from dto: CreateCycleTypeDTO) {
+    self.init()
+    
+      // user provided
+    self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    self.fileLink = dto.fileLink
+  }
+}
+
+extension CycleType {
+  func patch(with dto: PatchCycleTypeDTO) {
+    if let name = dto.name { self.name = name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    if let fileLink = dto.fileLink { self.fileLink = fileLink }
+  }
 }
