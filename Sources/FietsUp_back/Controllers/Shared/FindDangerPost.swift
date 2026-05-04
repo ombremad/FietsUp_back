@@ -11,9 +11,9 @@ import Fluent
 func findDangerPost(id: UUID, on db: any Database) async throws -> DangerPost {
   let query = DangerPost.query(on: db)
     .filter(\.$id == id)
-    .with(\.$user)
+    .with(\.$user) { $0.withCycle() }
     .with(\.$dangerCategory)
-    .with(\.$dangerComments) { $0.with(\.$user) }
+    .with(\.$dangerComments) { $0.with(\.$user) { $0.withCycle() } }
   
   guard let post = try await query.first() else {
     throw Abort(.notFound, reason: "DangerPost not found")

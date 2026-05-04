@@ -155,7 +155,7 @@ struct DangerCommentController: RouteCollection {
   private func findDangerComment(id: UUID, on db: any Database) async throws -> DangerComment {
     let comment = try await DangerComment.query(on: db)
       .filter(\.$id == id)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .first()
     return try returnOrFail(comment)
   }

@@ -101,7 +101,7 @@ struct ForumPostReportController: RouteCollection {
     let report = try await ForumPostReport.query(on: db)
       .filter(\.$id == id)
       .with(\.$forumPost, { $0.with(\.$user) })
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .first()
     return try returnOrFail(report)

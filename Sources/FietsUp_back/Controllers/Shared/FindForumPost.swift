@@ -12,8 +12,8 @@ import SQLKit
 func findForumPost(id: UUID, on db: any Database) async throws -> ForumPost {
   let query = ForumPost.query(on: db)
     .filter(\.$id == id)
-    .with(\.$user)
-    .with(\.$forumComments) { $0.with(\.$user) }
+    .with(\.$user) { $0.withCycle() }
+    .with(\.$forumComments) { $0.with(\.$user) { $0.withCycle() } }
   
   guard let post = try await query.first() else {
     throw Abort(.notFound, reason: "ForumPost not found")

@@ -149,7 +149,7 @@ struct ForumCommentController: RouteCollection {
   private func findForumComment(id: UUID, on db: any Database) async throws -> ForumComment {
     let comment = try await ForumComment.query(on: db)
       .filter(\.$id == id)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .first()
     return try returnOrFail(comment)
   }

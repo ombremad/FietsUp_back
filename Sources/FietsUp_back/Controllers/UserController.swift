@@ -137,26 +137,26 @@ struct UserController: RouteCollection {
   @Sendable
   func getByID(req: Request) async throws -> GetUserDTO {
     let userID = try req.parameters.require("userID", as: UUID.self)
-    let user = try await findUser(id: userID, on: req.db)
+    let user = try await findUserWithCycle(id: userID, on: req.db)
     return try GetUserDTO(from: user)
   }
 
   @Sendable
   func getMe(req: Request) async throws -> GetUserDTO {
-    let user = try await req.requireUser()
+    let user = try await req.requireUserWithCycle()
     return try GetUserDTO(from: user)
   }
 
   @Sendable
   func patchByID(req: Request) async throws -> GetUserDTO {
     let userID = try req.parameters.require("userID", as: UUID.self)
-    let user = try await findUser(id: userID, on: req.db)
+    let user = try await findUserWithCycle(id: userID, on: req.db)
     return try await patchUser(user, req: req)
   }
 
   @Sendable
   func patchMe(req: Request) async throws -> GetUserDTO {
-    let user = try await req.requireUser()
+    let user = try await req.requireUserWithCycle()
     return try await patchUser(user, req: req)
   }
 
@@ -170,6 +170,14 @@ struct UserController: RouteCollection {
   private func findUser(id: UUID, on db: any Database) async throws -> User {
     let user = try await User.query(on: db)
       .filter(\.$id == id)
+      .first()
+    return try returnOrFail(user)
+  }
+  
+  private func findUserWithCycle(id: UUID, on db: any Database) async throws -> User {
+    let user = try await User.query(on: db)
+      .filter(\.$id == id)
+      .withCycle()
       .first()
     return try returnOrFail(user)
   }

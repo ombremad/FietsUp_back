@@ -11,6 +11,9 @@ struct GetUserPublicDTO: Content {
   var id: UUID
   var nickname: String
   var streak: Int
+  var cycleColor: GetCycleColorDTO?
+  var cycleType: GetCycleTypeDTO?
+  var cycleDecoration: GetCycleDecorationDTO?
 }
 
 extension GetUserPublicDTO {
@@ -21,6 +24,9 @@ extension GetUserPublicDTO {
       id: id,
       nickname: model.nickname,
       streak: model.streak,
+      cycleColor: try model.cycleColor.map { try GetCycleColorDTO(from: $0) },
+      cycleType: try model.cycleType.map { try GetCycleTypeDTO(from: $0) },
+      cycleDecoration: try model.cycleDecoration.map { try GetCycleDecorationDTO(from: $0) },
     )
   }
 }

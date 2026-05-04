@@ -101,7 +101,7 @@ struct DangerPostReportController: RouteCollection {
     let report = try await DangerPostReport.query(on: db)
       .filter(\.$id == id)
       .with(\.$dangerPost, { $0.with(\.$user).with(\.$dangerCategory) })
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .first()
     return try returnOrFail(report)
