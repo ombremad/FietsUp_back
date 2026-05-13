@@ -7,10 +7,12 @@
 
 import Vapor
 
-struct GetTokenDTO: Content {
+struct GetAuthDTO: Content {
   let token: String
+  let user: GetUserDTO
 
-  init(_ token: String) {
+  init(token: String, user: User) throws {
     self.token = token
+    self.user = try GetUserDTO(from: user)
   }
 }

@@ -27,7 +27,7 @@ struct UserController: RouteCollection {
         summary: "Signup",
         description: "Create a new user",
         body: .type(CreateUserDTO.self),
-        response: .type(GetUserShortDTO.self)
+        response: .type(GetAuthDTO.self)
       )
       .openAPINoAuth()
 
@@ -37,7 +37,7 @@ struct UserController: RouteCollection {
         summary: "Login",
         description: "Log an existing user in",
         body: .type(LoginUserDTO.self),
-        response: .type(GetTokenDTO.self)
+        response: .type(GetAuthDTO.self)
       )
       .openAPINoAuth()
 
@@ -93,20 +93,32 @@ struct UserController: RouteCollection {
         body: .type(PatchUserDTO.self),
         response: .type(GetUserDTO.self)
       )
+    
+    userProtected.patch("me", "password", use: self.changeMyPassword)
+      .openAPI(
+        tags: "Users", "me",
+        summary: "Change my password",
+        description: "Change current user's password",
+        body: .type(PatchUserPasswordDTO.self),
+        response: .type(GetUserDTO.self)
+      )
   }
 
   @Sendable
-  func create(req: Request) async throws -> GetUserShortDTO {
+  func create(req: Request) async throws -> GetAuthDTO {
     try CreateUserDTO.validate(content: req)
     let dto = try req.content.decode(CreateUserDTO.self)
 
     let user = try User(from: dto)
     try await user.save(on: req.db)
-    return try GetUserShortDTO(from: user)
+    
+    let userID = try user.requireID()
+    let token = try JWTConfig.shared.sign(UserPayload(id: userID))
+    return try GetAuthDTO(token: token, user: user)
   }
 
   @Sendable
-  func login(req: Request) async throws -> GetTokenDTO {
+  func login(req: Request) async throws -> GetAuthDTO {
     try LoginUserDTO.validate(content: req)
     let userData = try req.content.decode(LoginUserDTO.self)
 
@@ -123,7 +135,7 @@ struct UserController: RouteCollection {
 
     let userID = try user.requireID()
     let token = try JWTConfig.shared.sign(UserPayload(id: userID))
-    return GetTokenDTO(token)
+    return try GetAuthDTO(token: token, user: user)
   }
 
   @Sendable
@@ -159,6 +171,21 @@ struct UserController: RouteCollection {
     let user = try await req.requireUserWithCycle()
     return try await patchUser(user, req: req)
   }
+  
+  @Sendable
+  func changeMyPassword(req: Request) async throws -> GetUserDTO {
+    try PatchUserPasswordDTO.validate(content: req)
+    let dto = try req.content.decode(PatchUserPasswordDTO.self)
+    let user = try await req.requireUser()
+    
+    guard try Bcrypt.verify(dto.oldPassword, created: user.password) else {
+      throw Abort(.forbidden, reason: "Incorrect password.")
+    }
+    
+    try user.patchPassword(to: dto.newPassword)
+    try await user.save(on: req.db)
+    return try GetUserDTO(from: user)
+  }
 
   @Sendable
   func deleteByID(req: Request) async throws -> HTTPStatus {
@@ -189,7 +216,7 @@ struct UserController: RouteCollection {
     try await user.save(on: req.db)
     return try GetUserDTO(from: user)
   }
-
+  
   private func deleteUser(_ user: User, on db: any Database) async throws -> HTTPStatus {
     try await user.delete(on: db)
     return .noContent

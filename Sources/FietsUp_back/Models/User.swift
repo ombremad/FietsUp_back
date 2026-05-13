@@ -92,3 +92,9 @@ extension User {
     if let bio = dto.bio { self.bio = bio }
   }
 }
+
+extension User {
+  func patchPassword(to password: String) throws {
+    self.password = try Bcrypt.hash(password)
+  }
+}
