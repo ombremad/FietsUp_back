@@ -37,7 +37,7 @@ struct ForumPostController: RouteCollection {
         summary: "Like a forum post, or unlike it if previously liked",
         response: .type(GetForumPostDTO.self)
       )
-    
+
     userProtected.post(":forumPostID", "fav", use: self.fav)
       .openAPI(
         tags: "Forum", "Posts",
@@ -86,10 +86,22 @@ struct ForumPostController: RouteCollection {
       throw Abort(.notFound, reason: "ForumCategory not found")
     }
     
+    
     let post = ForumPost(from: dto, userID: userID, forumCategoryID: forumCategoryID)
     try await post.save(on: req.db)
     
-    return try await populateForumPostDTO(from: post, userID: userID, on: req.db)
+    let loadedPost = try await ForumPost.query(on: req.db)
+      .filter(\.$id == post.requireID())
+      .with(\.$user)
+      .with(\.$forumCategory)
+      .with(\.$forumComments)
+      .first()
+    
+    guard let loadedPost else {
+      throw Abort(.internalServerError)
+    }
+    
+    return try await populateForumPostDTO(from: loadedPost, userID: userID, on: req.db)
   }
   
   @Sendable
