@@ -17,6 +17,7 @@ final class User: Model, @unchecked Sendable {
   @Field(key: "admin_rights") var adminRights: Int
   @OptionalField(key: "bio") var bio: String?
   @Field(key: "streak") var streak: Int
+  @Field(key: "streak_updated_this_week") var streakUpdatedThisWeek: Bool
   @Field(key: "total_elapsed_distance") var totalElapsedDistance: Int
 
   @OptionalParent(key: "id_cycle_type") var cycleType: CycleType?

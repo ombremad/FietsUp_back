@@ -57,7 +57,16 @@ struct ActivityController: RouteCollection {
     
     let activity = Activity(from: dto, userID: userID)
     try await activity.save(on: req.db)
-    return try GetActivityDTO(from: activity)
+    
+    var streakUpdated = false
+    if !user.streakUpdatedThisWeek {
+      user.streak += 1
+      user.streakUpdatedThisWeek = true
+      streakUpdated = true
+      try await user.save(on: req.db)
+    }
+    
+    return try GetActivityDTO(from: activity, streakUpdated: streakUpdated)
   }
 
   @Sendable

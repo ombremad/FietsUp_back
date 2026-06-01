@@ -13,10 +13,11 @@ struct GetActivityDTO: Content {
   var endDate: Date
   var length: Int
   var distance: Int
+  var streakUpdated: Bool?
 }
 
 extension GetActivityDTO {
-  init(from model: Activity) throws {
+  init(from model: Activity, streakUpdated: Bool? = nil) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
     
     self.init(
@@ -24,7 +25,8 @@ extension GetActivityDTO {
       startDate: model.startDate,
       endDate: model.endDate,
       length: model.length,
-      distance: model.distance
+      distance: model.distance,
+      streakUpdated: streakUpdated
     )
   }
 }
