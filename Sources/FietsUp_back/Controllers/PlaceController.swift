@@ -7,6 +7,7 @@
 
 import Vapor
 import Fluent
+import FluentSQL
 
 struct PlaceController: RouteCollection {
   func boot(routes: any RoutesBuilder) throws {
@@ -35,6 +36,7 @@ struct PlaceController: RouteCollection {
         tags: "Places",
         summary: "Near",
         description: "Get nearest places sorted",
+        query: .type(QueryPlaceDTO.self),
         response: .type([GetPlaceDTO].self)
       )
     
@@ -84,8 +86,43 @@ struct PlaceController: RouteCollection {
   
   @Sendable
   func getNearest(req: Request) async throws -> [GetPlaceDTO] {
-    // TODO: get closest places with sql raw CALL get_closest_places(48.5734, 7.7521, 5000, 20); where values are latitude, longitude, radius in meters, and max results
-    return [];
+    try QueryPlaceDTO.validate(query: req)
+    let query = try req.query.decode(QueryPlaceDTO.self)
+    let radius = 5_000
+    let limit = 20
+
+    guard let sql = req.db as? (any SQLDatabase) else {
+      throw Abort(.internalServerError)
+    }
+    
+    struct NearbyResult: Decodable { let id: UUID }
+    
+    let orderedIds = try await sql.raw("""
+    SELECT p.id FROM (
+        SELECT id,
+            ST_Distance_Sphere(
+                location,
+                ST_GeomFromText(
+                    CONCAT('POINT(', \(bind: query.longitude), ' ', \(bind: query.latitude), ')'),
+                    4326
+                )
+            ) AS distance
+        FROM places
+    ) AS p
+    WHERE p.distance <= \(bind: radius)
+    ORDER BY p.distance
+    LIMIT \(bind: limit)
+    """).all(decoding: NearbyResult.self).map(\.id)
+
+    guard !orderedIds.isEmpty else { return [] }
+    
+    let places = try await Place.query(on: req.db)
+      .filter(\.$id ~~ orderedIds)
+      .with(\.$categories)
+      .all()
+    
+    return try orderedIds.compactMap { id in places.first { $0.id == id } }
+      .map { try GetPlaceDTO(from: $0) }
   }
   
   @Sendable
