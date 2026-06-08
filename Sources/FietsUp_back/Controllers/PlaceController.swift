@@ -88,8 +88,8 @@ struct PlaceController: RouteCollection {
   func getNearest(req: Request) async throws -> [GetPlaceDTO] {
     try QueryPlaceDTO.validate(query: req)
     let query = try req.query.decode(QueryPlaceDTO.self)
-    let radius = 5_000
-    let limit = 20
+    let radius = 50_000
+    let limit = 50
 
     guard let sql = req.db as? (any SQLDatabase) else {
       throw Abort(.internalServerError)

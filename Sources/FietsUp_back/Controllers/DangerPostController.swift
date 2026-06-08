@@ -53,6 +53,15 @@ struct DangerPostController: RouteCollection {
         response: .type([GetDangerPostWithCountsDTO].self)
       )
     
+    userProtected.get("near", use: self.getNearest)
+      .openAPI(
+        tags: "Dangers", "Posts",
+        summary: "Near",
+        description: "Get nearest danger posts sorted",
+        query: .type(QueryDangerPostDTO.self),
+        response: .type([GetDangerPostWithCountsDTO].self)
+      )
+    
     userProtected.get(":dangerPostID", use: self.getByID)
       .openAPI(
         tags: "Dangers", "Posts",
@@ -153,6 +162,58 @@ struct DangerPostController: RouteCollection {
     return try posts.map { post in
       try GetDangerPostWithCountsDTO(from: post, totalComments: countsByPostID[post.requireID()] ?? 0)
     }
+  }
+  
+  @Sendable
+  func getNearest(req: Request) async throws -> [GetDangerPostWithCountsDTO] {
+    try QueryDangerPostDTO.validate(query: req)
+    let query = try req.query.decode(QueryDangerPostDTO.self)
+    let radius = 50_000
+    let limit = 50
+    
+    guard let sql = req.db as? (any SQLDatabase) else {
+      throw Abort(.internalServerError)
+    }
+    
+    struct NearbyResult: Decodable { let id: UUID }
+    
+    let orderedIds = try await sql.raw("""
+    SELECT p.id FROM (
+        SELECT id,
+            ST_Distance_Sphere(
+                location,
+                ST_GeomFromText(
+                    CONCAT('POINT(', \(bind: query.longitude), ' ', \(bind: query.latitude), ')'),
+                    4326
+                )
+            ) AS distance
+        FROM danger_posts
+    ) AS p
+    WHERE p.distance <= \(bind: radius)
+    ORDER BY p.distance
+    LIMIT \(bind: limit)
+    """).all(decoding: NearbyResult.self).map(\.id)
+    
+    guard !orderedIds.isEmpty else { return [] }
+    
+    let posts = try await DangerPost.query(on: req.db)
+      .filter(\.$id ~~ orderedIds)
+      .with(\.$user)
+      .with(\.$dangerCategory)
+      .all()
+    
+    let countsByPostID = try await commentCounts(for: posts, on: req.db)
+    
+    return try orderedIds
+      .compactMap { id in
+        posts.first { $0.id == id }
+      }
+      .map { post in
+        try GetDangerPostWithCountsDTO(
+          from: post,
+          totalComments: countsByPostID[post.requireID()] ?? 0
+        )
+      }
   }
   
   @Sendable
