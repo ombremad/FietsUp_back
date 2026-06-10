@@ -106,7 +106,18 @@ struct DangerPostController: RouteCollection {
     let post = DangerPost(from: dto, userID: userID, dangerCategoryID: dangerCategoryID)
     try await post.save(on: req.db)
     
-    return try await populateDangerPostDTO(from: post, userID: userID, on: req.db)
+    let loadedPost = try await DangerPost.query(on: req.db)
+      .filter(\.$id == post.requireID())
+      .with(\.$user)
+      .with(\.$dangerCategory)
+      .with(\.$dangerComments)
+      .first()
+    
+    guard let loadedPost else {
+      throw Abort(.internalServerError)
+    }
+    
+    return try await populateDangerPostDTO(from: loadedPost, userID: userID, on: req.db)
   }
   
   @Sendable
@@ -168,8 +179,9 @@ struct DangerPostController: RouteCollection {
   func getNearest(req: Request) async throws -> [GetDangerPostWithCountsDTO] {
     try QueryDangerPostDTO.validate(query: req)
     let query = try req.query.decode(QueryDangerPostDTO.self)
-    let radius = 50_000
+    let radius = 15_000
     let limit = 50
+    let days = 7
     
     guard let sql = req.db as? (any SQLDatabase) else {
       throw Abort(.internalServerError)
@@ -188,6 +200,8 @@ struct DangerPostController: RouteCollection {
                 )
             ) AS distance
         FROM danger_posts
+        WHERE last_activity_date >= DATE_SUB(NOW(), INTERVAL \(bind: days) DAY)
+        OR creation_date >= DATE_SUB(NOW(), INTERVAL \(bind: days) DAY)
     ) AS p
     WHERE p.distance <= \(bind: radius)
     ORDER BY p.distance

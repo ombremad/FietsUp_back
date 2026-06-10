@@ -36,7 +36,6 @@ extension GetDangerCommentDTO {
 }
 
 func populateDangerCommentDTO(from dangerComment: DangerComment, userID: UUID, on db: any Database) async throws -> GetDangerCommentDTO {
-  
   async let likeCount = DangerCommentLike.query(on: db)
     .filter(\.$dangerComment.$id == dangerComment.requireID())
     .count()
@@ -110,9 +109,11 @@ func populateDangerCommentsDTOs(from comments: [DangerComment], userID: UUID, on
   }()
   
   let (counts, liked, faved) = try await (likeCounts, likedIDs, favedIDs)
+  let sorted = comments.sorted(by: { ($0.creationDate ?? .distantPast) < ($1.creationDate ?? .distantPast) })
   
   var dtos: [GetDangerCommentDTO] = []
-  for comment in comments {
+
+  for comment in sorted {
     let id = try comment.requireID()
     dtos.append(try GetDangerCommentDTO(
       from: comment,

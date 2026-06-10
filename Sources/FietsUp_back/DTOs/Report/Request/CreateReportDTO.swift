@@ -9,5 +9,5 @@ import Vapor
 
 struct CreateReportDTO: Content {
   var details: String?
-  var categoryID: UUID
+  var categoryId: UUID
 }

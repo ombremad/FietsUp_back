@@ -12,6 +12,7 @@ struct CreateDangerPostDTO: Content {
   var content: String
   var latitude: Double
   var longitude: Double
+  // TODO: add category
 }
 
 extension CreateDangerPostDTO: Validatable {

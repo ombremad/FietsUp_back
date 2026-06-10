@@ -29,7 +29,7 @@ final class DangerPostReport: Model, @unchecked Sendable {
     if let details = dto.details {
       self.details = details.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    self.$moderationCategory.id = dto.categoryID
+    self.$moderationCategory.id = dto.categoryId
   }
 }
 

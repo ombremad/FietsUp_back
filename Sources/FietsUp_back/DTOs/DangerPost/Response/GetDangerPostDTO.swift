@@ -45,7 +45,6 @@ extension GetDangerPostDTO {
 }
 
 func populateDangerPostDTO(from dangerPost: DangerPost, userID: UUID, on db: any Database) async throws -> GetDangerPostDTO {
-  
   async let likeCount = DangerPostLike.query(on: db)
     .filter(\.$dangerPost.$id == dangerPost.requireID())
     .count()
