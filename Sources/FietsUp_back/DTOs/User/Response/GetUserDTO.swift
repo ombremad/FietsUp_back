@@ -17,6 +17,7 @@ struct GetUserDTO: Content {
   var streak: Int
   var daysSinceSignup: Int
   var totalElapsedDistance: Int
+  var adminRights: Int
   var cycleColor: GetCycleColorDTO?
   var cycleType: GetCycleTypeDTO?
   var cycleDecoration: GetCycleDecorationDTO?
@@ -38,6 +39,7 @@ extension GetUserDTO {
       streak: model.streak,
       daysSinceSignup: daysSinceSignup,
       totalElapsedDistance: model.totalElapsedDistance,
+      adminRights: model.adminRights,
       cycleColor: try model.cycleColor.map { try GetCycleColorDTO(from: $0) },
       cycleType: try model.cycleType.map { try GetCycleTypeDTO(from: $0) },
       cycleDecoration: try model.cycleDecoration.map { try GetCycleDecorationDTO(from: $0) },
