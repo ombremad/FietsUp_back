@@ -21,6 +21,14 @@ struct DangerCategoryController: RouteCollection {
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
+    userProtected.get(use: self.getAll)
+      .openAPI(
+        tags: "Dangers", "Categories",
+        summary: "List",
+        description: "List all available danger categories",
+        response: .type([GetDangerCategoryDTO].self)
+      )
+
     adminProtected.post(use: self.create)
       .openAPI(
         tags: "Dangers", "Categories",
@@ -28,14 +36,6 @@ struct DangerCategoryController: RouteCollection {
         description: "Create a danger category",
         body: .type(CreateDangerCategoryDTO.self),
         response: .type(GetDangerCategoryDTO.self)
-      )
-    
-    adminProtected.get(use: self.getAll)
-      .openAPI(
-        tags: "Dangers", "Categories",
-        summary: "List",
-        description: "List all available danger categories",
-        response: .type([GetDangerCategoryDTO].self)
       )
     
     adminProtected.patch(":categoryID", use: self.patchByID)

@@ -13,10 +13,22 @@ struct PlaceCategoryController: RouteCollection {
     
     let request = routes.grouped("places", "categories")
     
+    let userProtected = request
+      .grouped(JWTMiddleware())
+      .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
+    
     let adminProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
 
+    userProtected.get(use: self.getAll)
+      .openAPI(
+        tags: "Places", "Categories",
+        summary: "List",
+        description: "List all available place categories",
+        response: .type([GetPlaceCategoryDTO].self)
+      )
+    
     adminProtected.post(use: self.create)
       .openAPI(
         tags: "Places", "Categories",
@@ -24,14 +36,6 @@ struct PlaceCategoryController: RouteCollection {
         description: "Create a place category",
         body: .type(CreatePlaceCategoryDTO.self),
         response: .type(GetPlaceCategoryDTO.self)
-      )
-    
-    adminProtected.get(use: self.getAll)
-      .openAPI(
-        tags: "Places", "Categories",
-        summary: "List",
-        description: "List all available place categories",
-        response: .type([GetPlaceCategoryDTO].self)
       )
     
     adminProtected.patch(":placeCategoryID", use: self.patchByID)
