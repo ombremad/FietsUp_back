@@ -13,6 +13,10 @@ struct CycleTypeController: RouteCollection {
     
     let request = routes.grouped("cycles", "types")
     
+    let userProtected = request
+      .grouped(JWTMiddleware())
+      .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
+    
     let adminProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
@@ -26,7 +30,7 @@ struct CycleTypeController: RouteCollection {
         response: .type(GetCycleTypeDTO.self)
       )
     
-    adminProtected.get(use: self.getAll)
+    userProtected.get(use: self.getAll)
       .openAPI(
         tags: "Cycles", "Types",
         summary: "List",

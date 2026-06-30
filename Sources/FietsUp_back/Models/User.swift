@@ -90,7 +90,12 @@ extension User {
     if let nickname = dto.nickname {
       self.nickname = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    if let bio = dto.bio { self.bio = bio }
+    if let bio = dto.bio {
+      self.bio = bio.isEmpty ? nil : bio.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let cycleTypeId = dto.cycleTypeId { self.$cycleType.id = cycleTypeId }
+    if let cycleColorId = dto.cycleColorId { self.$cycleColor.id = cycleColorId }
+    if let cycleDecorationId = dto.cycleDecorationId { self.$cycleDecoration.id = cycleDecorationId }
   }
 }
 

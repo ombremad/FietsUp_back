@@ -214,7 +214,10 @@ struct UserController: RouteCollection {
     let dto = try req.content.decode(PatchUserDTO.self)
     user.patch(with: dto)
     try await user.save(on: req.db)
-    return try GetUserDTO(from: user)
+    
+    let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
+    
+    return try GetUserDTO(from: updated)
   }
   
   private func deleteUser(_ user: User, on db: any Database) async throws -> HTTPStatus {
