@@ -123,8 +123,9 @@ struct UserController: RouteCollection {
     let userData = try req.content.decode(LoginUserDTO.self)
 
     guard let user = try await User.query(on: req.db)
-        .filter(\.$email == userData.email)
-        .first()
+      .filter(\.$email == userData.email)
+      .withCycle()
+      .first()
     else {
       throw Abort(.unauthorized, reason: "Incorrect login. Check your email and password.")
     }
