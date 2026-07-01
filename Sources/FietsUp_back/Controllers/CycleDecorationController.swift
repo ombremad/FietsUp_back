@@ -62,7 +62,7 @@ struct CycleDecorationController: RouteCollection {
   @Sendable
   func getAll(req: Request) async throws -> [GetCycleDecorationDTO] {
     try await CycleDecoration.query(on: req.db)
-      .sort(\.$name)
+      .sort(\.$fileLink)
       .all()
       .map { cycleDecoration in try GetCycleDecorationDTO(from: cycleDecoration) }
   }

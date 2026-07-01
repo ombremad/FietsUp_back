@@ -62,7 +62,7 @@ struct CycleTypeController: RouteCollection {
   @Sendable
   func getAll(req: Request) async throws -> [GetCycleTypeDTO] {
     try await CycleType.query(on: req.db)
-      .sort(\.$name)
+      .sort(\.$fileLink)
       .all()
       .map { cycleType in try GetCycleTypeDTO(from: cycleType) }
   }
