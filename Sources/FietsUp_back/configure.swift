@@ -30,8 +30,8 @@ public func configure(_ app: Application) async throws {
   app.middleware.use(CORSMiddleware(configuration: corsConfiguration))
 
   // Gatekeeper
-  app.gatekeeper.config = .init(maxRequests: 60, per: .minute)
-  app.gatekeeper.config = .init(maxRequests: 10, per: .second)
+  app.gatekeeper.config = .init(maxRequests: 100, per: .minute)
+  app.gatekeeper.config = .init(maxRequests: 20, per: .second)
   app.middleware.use(GatekeeperMiddleware())
 
   // Json strategies
