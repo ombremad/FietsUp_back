@@ -69,7 +69,7 @@ struct DangerCommentController: RouteCollection {
     try CreateDangerCommentDTO.validate(content: req)
     let dto = try req.content.decode(CreateDangerCommentDTO.self)
     
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     
@@ -81,7 +81,7 @@ struct DangerCommentController: RouteCollection {
   
   @Sendable
   func like(req: Request) async throws -> GetDangerPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerCommentID = try req.parameters.require("dangerCommentID", as: UUID.self)
     guard let dangerComment = try await DangerComment.find(dangerCommentID, on: req.db) else {
       throw Abort(.notFound, reason: "DangerComment not found")
@@ -106,7 +106,7 @@ struct DangerCommentController: RouteCollection {
   
   @Sendable
   func fav(req: Request) async throws -> GetDangerPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerCommentID = try req.parameters.require("dangerCommentID", as: UUID.self)
     guard let dangerComment = try await DangerComment.find(dangerCommentID, on: req.db) else {
       throw Abort(.notFound, reason: "DangerComment not found")
@@ -131,7 +131,7 @@ struct DangerCommentController: RouteCollection {
   
   @Sendable
   func patchByID(req: Request) async throws -> GetDangerCommentDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let commentID = try req.parameters.require("dangerCommentID", as: UUID.self)
     let comment = try await findDangerComment(id: commentID, on: req.db)
     

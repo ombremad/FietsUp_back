@@ -51,7 +51,7 @@ struct DangerPostReportController: RouteCollection {
   @Sendable
   func create(req: Request) async throws -> GetDangerPostReportDTO {
     let dto = try req.content.decode(CreateReportDTO.self)
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     
     guard try await DangerPost.find(dangerPostID, on: req.db) != nil else {

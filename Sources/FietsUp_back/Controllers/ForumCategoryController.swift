@@ -28,7 +28,7 @@ struct ForumCategoryController: RouteCollection {
         summary: "Create",
         description: "Create a forum category",
         body: .type(CreateForumCategoryDTO.self),
-        response: .type(GetForumCategoryDTO.self)
+        response: .type(GetForumCategoryShortDTO.self)
       )
     
     adminProtected.get("admin", use: self.getAll)
@@ -76,13 +76,13 @@ struct ForumCategoryController: RouteCollection {
   }
   
   @Sendable
-  func create(req: Request) async throws -> GetForumCategoryDTO {
+  func create(req: Request) async throws -> GetForumCategoryShortDTO {
     try CreateForumCategoryDTO.validate(content: req)
     let dto = try req.content.decode(CreateForumCategoryDTO.self)
     
     let forumCategory = ForumCategory(from: dto)
     try await forumCategory.save(on: req.db)
-    return try GetForumCategoryDTO(from: forumCategory, commentCounts: [:])
+    return try GetForumCategoryShortDTO(from: forumCategory)
   }
   
   @Sendable

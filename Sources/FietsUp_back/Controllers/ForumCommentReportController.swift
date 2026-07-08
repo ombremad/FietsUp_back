@@ -51,7 +51,7 @@ struct ForumCommentReportController: RouteCollection {
   @Sendable
   func create(req: Request) async throws -> GetForumCommentReportDTO {
     let dto = try req.content.decode(CreateReportDTO.self)
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
     
     guard try await ForumComment.find(forumCommentID, on: req.db) != nil else {

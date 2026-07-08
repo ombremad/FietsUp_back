@@ -17,6 +17,10 @@ struct UserController: RouteCollection {
       .grouped(JWTMiddleware())
       .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
     
+    let modProtected = request
+      .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 1))
+      .groupedOpenAPI(auth: .bearer(id: "ModBearer", format: "JWT"))
+    
     let adminProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
@@ -76,6 +80,16 @@ struct UserController: RouteCollection {
         path: .type(UUID.self),
         response: .type(HTTPStatus.self)
       )
+    
+    modProtected.patch("ban", ":userID", use: self.banUserByID)
+      .openAPI(
+        tags: "Users",
+        summary: "Ban",
+        description: "Ban an existing user by id",
+        path: .type(UUID.self),
+        body: .type(BanUserDTO.self),
+        response: .type(GetUserDTO.self)
+      )
 
     userProtected.get("me", use: self.getMe)
       .openAPI(
@@ -133,7 +147,11 @@ struct UserController: RouteCollection {
     guard try Bcrypt.verify(userData.password, created: user.password) else {
       throw Abort(.unauthorized, reason: "Incorrect login. Check your email and password.")
     }
-
+    
+    if let banEndDate = user.banEndDate, banEndDate >= .now {
+      throw Abort(.unauthorized, reason: "User is banned until \(banEndDate.description)")
+    }
+    
     let userID = try user.requireID()
     let token = try JWTConfig.shared.sign(UserPayload(id: userID))
     return try GetAuthDTO(token: token, user: user)
@@ -177,7 +195,7 @@ struct UserController: RouteCollection {
   func changeMyPassword(req: Request) async throws -> GetUserDTO {
     try PatchUserPasswordDTO.validate(content: req)
     let dto = try req.content.decode(PatchUserPasswordDTO.self)
-    let user = try await req.requireUser()
+    let user = try req.requireUser()
     
     guard try Bcrypt.verify(dto.oldPassword, created: user.password) else {
       throw Abort(.forbidden, reason: "Incorrect password.")
@@ -193,6 +211,19 @@ struct UserController: RouteCollection {
     let userID = try req.parameters.require("userID", as: UUID.self)
     let user = try await findUser(id: userID, on: req.db)
     return try await deleteUser(user, on: req.db)
+  }
+  
+  @Sendable
+  func banUserByID(req: Request) async throws -> GetUserDTO {
+    let userID = try req.parameters.require("userID", as: UUID.self)
+    let user = try await findUser(id: userID, on: req.db)
+    
+    let dto = try req.content.decode(BanUserDTO.self)
+    user.ban(until: dto.banEndDate)
+    try await user.save(on: req.db)
+    
+    let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
+    return try GetUserDTO(from: updated)
   }
 
   private func findUser(id: UUID, on db: any Database) async throws -> User {

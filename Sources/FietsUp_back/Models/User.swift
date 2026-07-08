@@ -2,7 +2,7 @@ import Fluent
 import JWT
 import Vapor
 
-final class User: Model, @unchecked Sendable {
+final class User: Model, Authenticatable, @unchecked Sendable {
   static let schema = "users"
 
   @ID(key: .id) var id: UUID?
@@ -96,6 +96,10 @@ extension User {
     if let cycleTypeId = dto.cycleTypeId { self.$cycleType.id = cycleTypeId }
     if let cycleColorId = dto.cycleColorId { self.$cycleColor.id = cycleColorId }
     if let cycleDecorationId = dto.cycleDecorationId { self.$cycleDecoration.id = cycleDecorationId }
+  }
+  
+  func ban(until banEndDate: Date) {
+    self.banEndDate = banEndDate
   }
 }
 

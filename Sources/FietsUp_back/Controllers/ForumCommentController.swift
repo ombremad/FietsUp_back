@@ -67,7 +67,7 @@ struct ForumCommentController: RouteCollection {
     try CreateForumCommentDTO.validate(content: req)
     let dto = try req.content.decode(CreateForumCommentDTO.self)
     
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
 
@@ -79,7 +79,7 @@ struct ForumCommentController: RouteCollection {
   
   @Sendable
   func like(req: Request) async throws -> GetForumPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
     guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "ForumComment not found") }
     
@@ -102,7 +102,7 @@ struct ForumCommentController: RouteCollection {
   
   @Sendable
   func fav(req: Request) async throws -> GetForumPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
     guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "ForumComment not found") }
     
@@ -125,7 +125,7 @@ struct ForumCommentController: RouteCollection {
   
   @Sendable
   func patchByID(req: Request) async throws -> GetForumCommentDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let commentID = try req.parameters.require("forumCommentID", as: UUID.self)
     let comment = try await findForumComment(id: commentID, on: req.db)
     

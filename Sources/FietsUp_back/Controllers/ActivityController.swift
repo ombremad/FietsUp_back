@@ -43,7 +43,7 @@ struct ActivityController: RouteCollection {
 
   @Sendable
   func create(req: Request) async throws -> GetActivityDTO {
-    let user = try await req.requireUser()
+    let user = try req.requireUser()
     let userID = try user.requireID()
     try CreateActivityDTO.validate(content: req)
     let dto = try req.content.decode(CreateActivityDTO.self)
@@ -71,7 +71,7 @@ struct ActivityController: RouteCollection {
 
   @Sendable
   func getAll(req: Request) async throws -> [GetActivityDTO] {
-    let user = try await req.requireUser()
+    let user = try req.requireUser()
     let userID = try user.requireID()
     
     let activities = try await Activity.query(on: req.db)
@@ -88,7 +88,7 @@ struct ActivityController: RouteCollection {
     let id = try req.parameters.require("id", as: UUID.self)
     let activity = try await find(id: id, on: req.db)
     
-    let user = try await req.requireUser()
+    let user = try req.requireUser()
     let userID = try user.requireID()
     guard activity.$user.id == userID else {
       throw Abort(.notFound, reason: "Activity not found")

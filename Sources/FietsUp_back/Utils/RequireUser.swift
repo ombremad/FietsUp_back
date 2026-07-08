@@ -9,21 +9,18 @@ import Vapor
 import Fluent
 
 extension Request {
-  func requireUser() async throws -> User {
-    let payload = try self.auth.require(UserPayload.self)
-    guard let user = try await User.find(payload.id, on: self.db)
-    else {
-      throw Abort(.notFound, reason: "User not found")
-    }
-    return user
+  func requireUser() throws -> User {
+    try self.auth.require(User.self)
   }
 }
 
 extension Request {
   func requireUserWithCycle() async throws -> User {
-    let payload = try self.auth.require(UserPayload.self)
+    let currentUser = try self.auth.require(User.self)
+    let currentUserID = try currentUser.requireID()
+    
     guard let user = try await User.query(on: self.db)
-      .filter(\.$id == payload.id)
+      .filter(\.$id == currentUserID)
       .withCycle()
       .first()
     else {

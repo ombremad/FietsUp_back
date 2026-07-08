@@ -29,7 +29,7 @@ struct DashboardController: RouteCollection {
   @Sendable
   func get(req: Request) async throws -> GetDashboardDTO {
     // TODO: complete dashboard
-    let user = try await req.requireUser()
+    let user = try req.requireUser()
     return try GetDashboardDTO(user: user)
   }
 }

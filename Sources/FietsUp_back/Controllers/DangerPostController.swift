@@ -96,7 +96,7 @@ struct DangerPostController: RouteCollection {
     try CreateDangerPostDTO.validate(content: req)
     let dto = try req.content.decode(CreateDangerPostDTO.self)
     
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerCategoryID = try req.parameters.require("dangerCategoryID", as: UUID.self)
     
     guard try await DangerCategory.find(dangerCategoryID, on: req.db) != nil else {
@@ -122,7 +122,7 @@ struct DangerPostController: RouteCollection {
   
   @Sendable
   func like(req: Request) async throws -> GetDangerPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     
     let existingLike = try await DangerPostLike.query(on: req.db)
@@ -142,7 +142,7 @@ struct DangerPostController: RouteCollection {
   
   @Sendable
   func fav(req: Request) async throws -> GetDangerPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     
     let existingFav = try await DangerPostFav.query(on: req.db)
@@ -232,7 +232,7 @@ struct DangerPostController: RouteCollection {
   
   @Sendable
   func getByID(req: Request) async throws -> GetDangerPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
@@ -240,7 +240,7 @@ struct DangerPostController: RouteCollection {
   
   @Sendable
   func patchByID(req: Request) async throws -> GetDangerPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     

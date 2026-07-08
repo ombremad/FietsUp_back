@@ -79,7 +79,7 @@ struct ForumPostController: RouteCollection {
     try CreateForumPostDTO.validate(content: req)
     let dto = try req.content.decode(CreateForumPostDTO.self)
     
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumCategoryID = try req.parameters.require("forumCategoryID", as: UUID.self)
 
     guard try await ForumCategory.find(forumCategoryID, on: req.db) != nil else {
@@ -106,7 +106,7 @@ struct ForumPostController: RouteCollection {
   
   @Sendable
   func like(req: Request) async throws -> GetForumPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     
     let existingLike = try await ForumPostLike.query(on: req.db)
@@ -126,7 +126,7 @@ struct ForumPostController: RouteCollection {
   
   @Sendable
   func fav(req: Request) async throws -> GetForumPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
         
     let existingFav = try await ForumPostFav.query(on: req.db)
@@ -146,7 +146,7 @@ struct ForumPostController: RouteCollection {
     
   @Sendable
   func getByID(req: Request) async throws -> GetForumPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
     return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
@@ -154,7 +154,7 @@ struct ForumPostController: RouteCollection {
   
   @Sendable
   func patchByID(req: Request) async throws -> GetForumPostDTO {
-    let userID = try await req.requireUser().requireID()
+    let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
 

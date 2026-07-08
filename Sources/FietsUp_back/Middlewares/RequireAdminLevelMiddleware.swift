@@ -9,18 +9,14 @@ import Vapor
 
 struct RequireAdminLevelMiddleware: AsyncMiddleware {
   let minimumLevel: Int
-
+  
   func respond(to request: Request, chainingTo next: any AsyncResponder) async throws -> Response {
-    let payload = try request.auth.require(UserPayload.self)
-
-    guard let user = try await User.find(payload.id, on: request.db) else {
-      throw Abort(.notFound, reason: "User not found")
-    }
+    let user = try request.auth.require(User.self)
     
     guard user.adminRights >= minimumLevel else {
       throw Abort(.forbidden, reason: "Insufficient privileges")
     }
-
+    
     request.storage[ResolvedUserKey.self] = user
     return try await next.respond(to: request)
   }
