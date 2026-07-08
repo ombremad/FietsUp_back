@@ -81,7 +81,7 @@ struct UserController: RouteCollection {
         response: .type(HTTPStatus.self)
       )
     
-    modProtected.patch("ban", ":userID", use: self.banUserByID)
+    modProtected.patch(":userID", "ban", use: self.banUserByID)
       .openAPI(
         tags: "Users",
         summary: "Ban",

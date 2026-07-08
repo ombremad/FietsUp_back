@@ -43,18 +43,18 @@ struct ForumCommentController: RouteCollection {
         response: .type(GetForumPostDTO.self)
       )
     
-    modProtected.patch("mod", ":forumCommentID", use: self.patchByID)
+    modProtected.patch(":forumCommentID", use: self.patchByID)
       .openAPI(
-        tags: "Moderation", "Forum", "Comments",
+        tags: "Forum", "Comments",
         summary: "Find and patch an existing comment by id",
         path: .type(UUID.self),
         body: .type(PatchForumCommentDTO.self),
         response: .type(GetForumCommentDTO.self)
       )
     
-    modProtected.delete("mod", ":forumCommentID", use: self.deleteByID)
+    modProtected.delete(":forumCommentID", use: self.deleteByID)
       .openAPI(
-        tags: "Moderation", "Forum", "Comments",
+        tags: "Forum", "Comments",
         summary: "Delete",
         description: "Permanently delete an existing forum comment by id",
         path: .type(UUID.self),

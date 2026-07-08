@@ -54,9 +54,9 @@ struct ForumPostController: RouteCollection {
         response: .type(GetForumPostDTO.self)
       )
     
-    modProtected.patch("mod", ":forumPostID", use: self.patchByID)
+    modProtected.patch(":forumPostID", use: self.patchByID)
       .openAPI(
-        tags: "Moderation", "Forum", "Posts",
+        tags: "Forum", "Posts",
         summary: "Patch",
         description: "Find and patch an existing post by id",
         path: .type(UUID.self),
@@ -64,9 +64,9 @@ struct ForumPostController: RouteCollection {
         response: .type(GetForumPostDTO.self)
       )
     
-    modProtected.delete("mod", ":forumPostID", use: self.deleteByID)
+    modProtected.delete(":forumPostID", use: self.deleteByID)
       .openAPI(
-        tags: "Moderation", "Forum", "Posts",
+        tags: "Forum", "Posts",
         summary: "Delete",
         description: "Permanently delete an existing forum post (and all its comments) by id",
         path: .type(UUID.self),
