@@ -52,26 +52,28 @@ extension Place {
       self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     if let address = dto.address {
-      self.address = address?.trimmingCharacters(in: .whitespacesAndNewlines)
+      self.address = address.isEmpty ? nil : address.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     if let zipCode = dto.zipCode {
-      self.zipCode = zipCode?.trimmingCharacters(in: .whitespacesAndNewlines)
+      self.zipCode = zipCode.isEmpty ? nil : zipCode.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     if let city = dto.city {
-      self.city = city?.trimmingCharacters(in: .whitespacesAndNewlines)
+      self.city = city.isEmpty ? nil : city.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     if let country = dto.country {
-      self.country = country?.trimmingCharacters(in: .whitespacesAndNewlines)
+      self.country = country.isEmpty ? nil : country.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     if let phoneNumber = dto.phoneNumber {
-      self.phoneNumber = phoneNumber?.trimmingCharacters(in: .whitespacesAndNewlines)
+      self.phoneNumber = phoneNumber.isEmpty ? nil : phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     if let email = dto.email {
-      self.email = email?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+      self.email = email.isEmpty ? nil : email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
-    if let website = dto.website { self.website = website }
+    if let website = dto.website {
+      self.website = website.isEmpty ? nil : website
+    }
     if let otherDetails = dto.otherDetails {
-      self.otherDetails = otherDetails?.trimmingCharacters(in: .whitespacesAndNewlines)
+      self.otherDetails = otherDetails.isEmpty ? nil : otherDetails.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     if let latitude = dto.latitude { self.latitude = latitude }
     if let longitude = dto.longitude { self.longitude = longitude }
