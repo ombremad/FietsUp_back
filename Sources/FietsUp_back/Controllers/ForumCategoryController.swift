@@ -62,7 +62,7 @@ struct ForumCategoryController: RouteCollection {
         description: "Find and patch an existing forum category by id",
         path: .type(UUID.self),
         body: .type(PatchForumCategoryDTO.self),
-        response: .type(GetForumCategoryDTO.self)
+        response: .type(GetForumCategoryShortDTO.self)
       )
     
     adminProtected.delete("admin", ":forumCategoryID", use: self.deleteByID)
@@ -120,7 +120,7 @@ struct ForumCategoryController: RouteCollection {
   }
       
   @Sendable
-  func patchByID(req: Request) async throws -> GetForumCategoryDTO {
+  func patchByID(req: Request) async throws -> GetForumCategoryShortDTO {
     let id = try req.parameters.require("forumCategoryID", as: UUID.self)
     let category = try await findCategory(id: id, on: req.db)
     
@@ -128,7 +128,7 @@ struct ForumCategoryController: RouteCollection {
     let dto = try req.content.decode(PatchForumCategoryDTO.self)
     category.patch(with: dto)
     try await category.save(on: req.db)
-    return try GetForumCategoryDTO(from: category, commentCounts: [:])
+    return try GetForumCategoryShortDTO(from: category)
   }
   
   @Sendable
