@@ -50,7 +50,7 @@ struct UserController: RouteCollection {
         tags: "Users",
         summary: "List",
         description: "List all existing users",
-        response: .type([GetUserShortDTO].self)
+        response: .type([GetUserDTO].self)
       )
 
     adminProtected.get(":userID", use: self.getByID)
@@ -88,6 +88,15 @@ struct UserController: RouteCollection {
         description: "Ban an existing user by id",
         path: .type(UUID.self),
         body: .type(BanUserDTO.self),
+        response: .type(GetUserDTO.self)
+      )
+    
+    adminProtected.delete(":userID", "ban", use: self.unbanUserByID)
+      .openAPI(
+        tags: "Users",
+        summary: "Unban",
+        description: "Unban an existing user by id",
+        path: .type(UUID.self),
         response: .type(GetUserDTO.self)
       )
 
@@ -158,11 +167,11 @@ struct UserController: RouteCollection {
   }
 
   @Sendable
-  func getAll(req: Request) async throws -> [GetUserShortDTO] {
+  func getAll(req: Request) async throws -> [GetUserDTO] {
     try await User.query(on: req.db)
       .sort(\.$email)
       .all()
-      .map { user in try GetUserShortDTO(from: user) }
+      .map { user in try GetUserDTO(from: user) }
   }
 
   @Sendable
@@ -182,13 +191,29 @@ struct UserController: RouteCollection {
   func patchByID(req: Request) async throws -> GetUserDTO {
     let userID = try req.parameters.require("userID", as: UUID.self)
     let user = try await findUserWithCycle(id: userID, on: req.db)
-    return try await patchUser(user, req: req)
+    
+    try PatchUserAdminDTO.validate(content: req)
+    let dto = try req.content.decode(PatchUserAdminDTO.self)
+    
+    user.patchAdmin(with: dto)
+    try await user.save(on: req.db)
+    
+    let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
+    return try GetUserDTO(from: updated)
   }
 
   @Sendable
   func patchMe(req: Request) async throws -> GetUserDTO {
     let user = try await req.requireUserWithCycle()
-    return try await patchUser(user, req: req)
+    
+    try PatchUserDTO.validate(content: req)
+    let dto = try req.content.decode(PatchUserDTO.self)
+    
+    user.patch(with: dto)
+    try await user.save(on: req.db)
+    
+    let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
+    return try GetUserDTO(from: updated)
   }
   
   @Sendable
@@ -225,6 +250,18 @@ struct UserController: RouteCollection {
     let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
     return try GetUserDTO(from: updated)
   }
+  
+  @Sendable
+  func unbanUserByID(req: Request) async throws -> GetUserDTO {
+    let userID = try req.parameters.require("userID", as: UUID.self)
+    let user = try await findUser(id: userID, on: req.db)
+    
+    user.unban()
+    try await user.save(on: req.db)
+    
+    let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
+    return try GetUserDTO(from: updated)
+  }
 
   private func findUser(id: UUID, on db: any Database) async throws -> User {
     let user = try await User.query(on: db)
@@ -241,17 +278,6 @@ struct UserController: RouteCollection {
     return try returnOrFail(user)
   }
 
-  private func patchUser(_ user: User, req: Request) async throws -> GetUserDTO {
-    try PatchUserDTO.validate(content: req)
-    let dto = try req.content.decode(PatchUserDTO.self)
-    user.patch(with: dto)
-    try await user.save(on: req.db)
-    
-    let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
-    
-    return try GetUserDTO(from: updated)
-  }
-  
   private func deleteUser(_ user: User, on db: any Database) async throws -> HTTPStatus {
     try await user.delete(on: db)
     return .noContent

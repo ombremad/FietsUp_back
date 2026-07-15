@@ -98,8 +98,31 @@ extension User {
     if let cycleDecorationId = dto.cycleDecorationId { self.$cycleDecoration.id = cycleDecorationId }
   }
   
+  func patchAdmin(with dto: PatchUserAdminDTO) {
+    if let email = dto.email {
+      self.email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let nickname = dto.nickname {
+      self.nickname = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let firstName = dto.firstName {
+      self.firstName = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let lastName = dto.lastName {
+      self.lastName = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let bio = dto.bio {
+      self.bio = bio.isEmpty ? nil : bio.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if let adminRights = dto.adminRights { self.adminRights = adminRights }
+  }
+  
   func ban(until banEndDate: Date) {
     self.banEndDate = banEndDate
+  }
+  
+  func unban() {
+    self.banEndDate = nil
   }
 }
 
