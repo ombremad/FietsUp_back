@@ -144,6 +144,16 @@ struct PlaceController: RouteCollection {
     let dto = try req.content.decode(PatchPlaceDTO.self)
     place.patch(with: dto)
     try await place.save(on: req.db)
+    
+    if let categoriesIds = dto.categoriesIds {
+      let categories = try await PlaceCategory.query(on: req.db)
+        .filter(\.$id ~~ categoriesIds)
+        .all()
+      try await place.$categories.detachAll(on: req.db)
+      try await place.$categories.attach(categories, on: req.db)
+    }
+    try await place.$categories.load(on: req.db)
+
     return try GetPlaceDTO(from: place)
   }
   
