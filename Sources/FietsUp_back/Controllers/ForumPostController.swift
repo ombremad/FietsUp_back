@@ -28,21 +28,23 @@ struct ForumPostController: RouteCollection {
         summary: "Create",
         description: "Create a forum post",
         body: .type(CreateForumPostDTO.self),
-        response: .type(GetForumPostDTO.self)
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
     
     userProtected.post(":forumPostID", "like", use: self.like)
       .openAPI(
         tags: "Forum", "Posts",
         summary: "Like a forum post, or unlike it if previously liked",
-        response: .type(GetForumPostDTO.self)
+        query: .type(QueryPageDTO.self),
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
 
     userProtected.post(":forumPostID", "fav", use: self.fav)
       .openAPI(
         tags: "Forum", "Posts",
         summary: "Favorite a forum post, or unfavorite it if previously faved",
-        response: .type(GetForumPostDTO.self)
+        query: .type(QueryPageDTO.self),
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
         
     userProtected.get(":forumPostID", use: self.getByID)
@@ -50,8 +52,9 @@ struct ForumPostController: RouteCollection {
         tags: "Forum", "Posts",
         summary: "Get",
         description: "Find and get an existing post (and its comments) by id",
+        query: .type(QueryPageDTO.self),
         path: .type(UUID.self),
-        response: .type(GetForumPostDTO.self)
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
     
     modProtected.patch(":forumPostID", use: self.patchByID)
@@ -61,7 +64,7 @@ struct ForumPostController: RouteCollection {
         description: "Find and patch an existing post by id",
         path: .type(UUID.self),
         body: .type(PatchForumPostDTO.self),
-        response: .type(GetForumPostDTO.self)
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
     
     modProtected.delete(":forumPostID", use: self.deleteByID)
@@ -75,7 +78,7 @@ struct ForumPostController: RouteCollection {
   }
   
   @Sendable
-  func create(req: Request) async throws -> GetForumPostDTO {
+  func create(req: Request) async throws -> GetForumPostWithCommentsDTO {
     try CreateForumPostDTO.validate(content: req)
     let dto = try req.content.decode(CreateForumPostDTO.self)
     
@@ -101,11 +104,12 @@ struct ForumPostController: RouteCollection {
       throw Abort(.internalServerError)
     }
     
-    return try await populateForumPostDTO(from: loadedPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: loadedPost, userID: userID, req: req)
   }
   
   @Sendable
-  func like(req: Request) async throws -> GetForumPostDTO {
+  func like(req: Request) async throws -> GetForumPostWithCommentsDTO {
+    try QueryPageDTO.validate(query: req)
     let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     
@@ -121,11 +125,12 @@ struct ForumPostController: RouteCollection {
     }
     
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
-    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
   
   @Sendable
-  func fav(req: Request) async throws -> GetForumPostDTO {
+  func fav(req: Request) async throws -> GetForumPostWithCommentsDTO {
+    try QueryPageDTO.validate(query: req)
     let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
         
@@ -141,19 +146,20 @@ struct ForumPostController: RouteCollection {
     }
     
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
-    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
     
   @Sendable
-  func getByID(req: Request) async throws -> GetForumPostDTO {
+  func getByID(req: Request) async throws -> GetForumPostWithCommentsDTO {
+    try QueryPageDTO.validate(query: req)
     let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
-    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
   
   @Sendable
-  func patchByID(req: Request) async throws -> GetForumPostDTO {
+  func patchByID(req: Request) async throws -> GetForumPostWithCommentsDTO {
     let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     let forumPost = try await findForumPost(id: forumPostID, on: req.db)
@@ -163,7 +169,7 @@ struct ForumPostController: RouteCollection {
     forumPost.patch(with: dto)
     try await forumPost.save(on: req.db)
     
-    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
   
   @Sendable

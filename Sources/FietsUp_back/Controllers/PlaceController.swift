@@ -45,7 +45,8 @@ struct PlaceController: RouteCollection {
         tags: "Places",
         summary: "List",
         description: "List all available places",
-        response: .type([GetPlaceDTO].self)
+        query: .type(QueryPageDTO.self),
+        response: .type(Page<GetPlaceDTO>.self)
       )
     
     adminProtected.patch(":placeID", use: self.patchByID)
@@ -126,12 +127,13 @@ struct PlaceController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> [GetPlaceDTO] {
-    try await Place.query(on: req.db)
+  func getAll(req: Request) async throws -> Page<GetPlaceDTO> {
+    try QueryPageDTO.validate(query: req)
+
+    return try await Place.query(on: req.db)
       .sort(\.$name)
-      .limit(50)
       .with(\.$categories)
-      .all()
+      .paginate(for: req)
       .map { place in try GetPlaceDTO(from: place) }
   }
   

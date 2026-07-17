@@ -21,12 +21,21 @@ struct DangerCategoryController: RouteCollection {
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
-    userProtected.get(use: self.getAll)
+    userProtected.get(use: self.index)
+      .openAPI(
+        tags: "Dangers", "Categories",
+        summary: "Index",
+        description: "Danger categories index",
+        response: .type([GetDangerCategoryDTO].self)
+      )
+    
+    adminProtected.get("admin", use: self.getAll)
       .openAPI(
         tags: "Dangers", "Categories",
         summary: "List",
-        description: "List all available danger categories",
-        response: .type([GetDangerCategoryDTO].self)
+        description: "List of all danger categories",
+        query: .type(QueryPageDTO.self),
+        response: .type(Page<GetDangerCategoryDTO>.self)
       )
 
     adminProtected.post(use: self.create)
@@ -63,10 +72,20 @@ struct DangerCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> [GetDangerCategoryDTO] {
+  func index(req: Request) async throws -> [GetDangerCategoryDTO] {
     try await DangerCategory.query(on: req.db)
       .sort(\.$name)
       .all()
+      .map { category in try GetDangerCategoryDTO(from: category) }
+  }
+  
+  @Sendable
+  func getAll(req: Request) async throws -> Page<GetDangerCategoryDTO> {
+    try QueryPageDTO.validate(query: req)
+    
+    return try await DangerCategory.query(on: req.db)
+      .sort(\.$name)
+      .paginate(for: req)
       .map { category in try GetDangerCategoryDTO(from: category) }
   }
   

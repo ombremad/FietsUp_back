@@ -31,7 +31,8 @@ struct ModerationCategoryController: RouteCollection {
         tags: "Moderation", "Categories",
         summary: "List",
         description: "List all available moderation categories",
-        response: .type([GetModerationCategoryDTO].self)
+        query: .type(QueryPageDTO.self),
+        response: .type(Page<GetModerationCategoryDTO>.self)
       )
     
     adminProtected.patch(":id", use: self.patchByID)
@@ -56,10 +57,12 @@ struct ModerationCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> [GetModerationCategoryDTO] {
-    try await ModerationCategory.query(on: req.db)
+  func getAll(req: Request) async throws -> Page<GetModerationCategoryDTO> {
+    try QueryPageDTO.validate(query: req)
+
+    return try await ModerationCategory.query(on: req.db)
       .sort(\.$name)
-      .all()
+      .paginate(for: req)
       .map { category in try GetModerationCategoryDTO(from: category) }
   }
   

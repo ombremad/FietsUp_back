@@ -8,9 +8,9 @@ final class ForumPost: Model, @unchecked Sendable {
   @ID(key: .id) var id: UUID?
   @Field(key: "title") var title: String
   @Field(key: "content") var content: String
-  @OptionalField(key: "last_activity_date") var lastActivityDate: Date?
 
   @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
+  @Field(key: "last_activity_date") var lastActivityDate: Date
 
   @Parent(key: "id_user") var user: User
   @Parent(key: "id_forum_category") var forumCategory: ForumCategory
@@ -29,6 +29,7 @@ final class ForumPost: Model, @unchecked Sendable {
       // computed
     self.$user.id = userID
     self.$forumCategory.id = forumCategoryID
+    self.lastActivityDate = .now
 
       // user provided
     self.title = dto.title.trimmingCharacters(in: .whitespacesAndNewlines)

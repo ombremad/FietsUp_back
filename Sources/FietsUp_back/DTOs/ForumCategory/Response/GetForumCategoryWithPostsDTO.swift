@@ -6,23 +6,24 @@
 //
 
 import Vapor
+import Fluent
 
-struct GetForumCategoryDTO: Content {
+struct GetForumCategoryWithPostsDTO: Content {
   var id: UUID
   var name: String
   var details: String?
-  var posts: [GetForumPostWithCountsDTO]
+  var posts: Page<GetForumPostWithCountsDTO>
 }
 
-extension GetForumCategoryDTO {
-  init(from model: ForumCategory, commentCounts: [UUID: Int]) throws {
+extension GetForumCategoryWithPostsDTO {
+  init(from model: ForumCategory, posts: Page<ForumPost>, commentCounts: [UUID: Int]) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
     
     self.init(
       id: id,
       name: model.name,
       details: model.details,
-      posts: try model.forumPosts.map {
+      posts: try posts.map {
         try GetForumPostWithCountsDTO(from: $0, totalComments: commentCounts[$0.requireID()] ?? 0)
       }
     )

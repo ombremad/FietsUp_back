@@ -36,7 +36,8 @@ struct ForumCategoryController: RouteCollection {
         tags: "Forum", "Categories",
         summary: "List",
         description: "List forum categories",
-        response: .type([GetForumCategoryWithCountsDTO].self)
+        query: .type(QueryPageDTO.self),
+        response: .type(Page<GetForumCategoryWithCountsDTO>.self)
       )
     
     userProtected.get(use: self.getIndex)
@@ -52,7 +53,8 @@ struct ForumCategoryController: RouteCollection {
         tags: "Forum", "Categories",
         summary: "Get",
         description: "Find and get an existing category and its posts by id",
-        response: .type(GetForumCategoryDTO.self)
+        query: .type(QueryPageDTO.self),
+        response: .type(GetForumCategoryWithPostsDTO.self)
       )
         
     adminProtected.patch("admin", ":forumCategoryID", use: self.patchByID)
@@ -86,14 +88,16 @@ struct ForumCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> [GetForumCategoryWithCountsDTO] {
-    let categories = try await ForumCategory.query(on: req.db)
+  func getAll(req: Request) async throws -> Page<GetForumCategoryWithCountsDTO> {
+    try QueryPageDTO.validate(query: req)
+
+    let page = try await ForumCategory.query(on: req.db)
       .sort(\.$name)
-      .all()
+      .paginate(for: req)
+
+    let countsByCategoryID = try await postCounts(for: page.items, on: req.db)
     
-    let countsByCategoryID = try await postCounts(for: categories, on: req.db)
-    
-    return try categories.map { category in
+    return try page.map { category in
       try GetForumCategoryWithCountsDTO(from: category, totalPosts: countsByCategoryID[category.requireID()] ?? 0)
     }
   }
@@ -112,18 +116,28 @@ struct ForumCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getByID(req: Request) async throws -> GetForumCategoryDTO {
+  func getByID(req: Request) async throws -> GetForumCategoryWithPostsDTO {
     let categoryID = try req.parameters.require("forumCategoryID", as: UUID.self)
+    try QueryPageDTO.validate(query: req)
+    
     let category = try await findCategory(id: categoryID, on: req.db)
-    let commentCounts = try await countForumComments(for: category.forumPosts, on: req.db)
-    return try GetForumCategoryDTO(from: category, commentCounts: commentCounts)
+    
+    let postsPage = try await ForumPost.query(on: req.db)
+      .filter(\.$forumCategory.$id == categoryID)
+      .sort(\.$lastActivityDate, .descending)
+      .with(\.$user)
+      .paginate(for: req)
+    
+    let commentCounts = try await countForumComments(for: postsPage.items, on: req.db)
+    
+    return try GetForumCategoryWithPostsDTO(from: category, posts: postsPage, commentCounts: commentCounts)
   }
-      
+  
   @Sendable
   func patchByID(req: Request) async throws -> GetForumCategoryShortDTO {
     let id = try req.parameters.require("forumCategoryID", as: UUID.self)
     let category = try await findCategory(id: id, on: req.db)
-    
+
     try PatchForumCategoryDTO.validate(content: req)
     let dto = try req.content.decode(PatchForumCategoryDTO.self)
     category.patch(with: dto)
@@ -135,23 +149,18 @@ struct ForumCategoryController: RouteCollection {
   func deleteByID(req: Request) async throws -> HTTPStatus {
     let id = try req.parameters.require("forumCategoryID", as: UUID.self)
     let category = try await findCategory(id: id, on: req.db)
-    
+
     try await category.delete(on: req.db)
     return .noContent
   }
   
   private func findCategory(id: UUID, on db: any Database) async throws -> ForumCategory {
-    let query = ForumCategory.query(on: db)
+    guard let category = try await ForumCategory.query(on: db)
       .filter(\.$id == id)
-      .with(\.$forumPosts) { $0.with(\.$user) }
-    
-    guard let category = try await query.first() else {
+      .first()
+    else {
       throw Abort(.notFound, reason: "ForumCategory not found")
     }
-    
-    category.$forumPosts.value = category.$forumPosts.value?
-      .filter { $0.creationDate != nil }
-      .sorted { ($0.lastActivityDate ?? $0.creationDate!) > ($1.lastActivityDate ?? $1.creationDate!) }
     return category
   }
   

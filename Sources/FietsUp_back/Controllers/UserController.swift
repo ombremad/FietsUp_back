@@ -50,7 +50,8 @@ struct UserController: RouteCollection {
         tags: "Users",
         summary: "List",
         description: "List all existing users",
-        response: .type([GetUserDTO].self)
+        query: .type(QueryPageDTO.self),
+        response: .type(Page<GetUserDTO>.self)
       )
 
     adminProtected.get(":userID", use: self.getByID)
@@ -167,10 +168,12 @@ struct UserController: RouteCollection {
   }
 
   @Sendable
-  func getAll(req: Request) async throws -> [GetUserDTO] {
-    try await User.query(on: req.db)
+  func getAll(req: Request) async throws -> Page<GetUserDTO> {
+    try QueryPageDTO.validate(query: req)
+    
+    return try await User.query(on: req.db)
       .sort(\.$email)
-      .all()
+      .paginate(for: req)
       .map { user in try GetUserDTO(from: user) }
   }
 

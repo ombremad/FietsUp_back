@@ -13,15 +13,9 @@ func findForumPost(id: UUID, on db: any Database) async throws -> ForumPost {
   let query = ForumPost.query(on: db)
     .filter(\.$id == id)
     .with(\.$user) { $0.withCycle() }
-    .with(\.$forumComments) { $0.with(\.$user) { $0.withCycle() } }
   
   guard let post = try await query.first() else {
     throw Abort(.notFound, reason: "ForumPost not found")
   }
-  
-  post.$forumComments.value = post.$forumComments.value?
-    .filter { $0.creationDate != nil }
-    .sorted { $0.creationDate! < $1.creationDate! }
-  
   return post
 }

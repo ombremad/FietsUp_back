@@ -21,12 +21,21 @@ struct PlaceCategoryController: RouteCollection {
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
 
-    userProtected.get(use: self.getAll)
+    userProtected.get(use: self.index)
+      .openAPI(
+        tags: "Places", "Categories",
+        summary: "Index",
+        description: "Place categories index",
+        response: .type([GetPlaceCategoryDTO].self)
+      )
+    
+    adminProtected.get("admin", use: self.getAll)
       .openAPI(
         tags: "Places", "Categories",
         summary: "List",
-        description: "List all available place categories",
-        response: .type([GetPlaceCategoryDTO].self)
+        description: "Get all place categories",
+        query: .type(QueryPageDTO.self),
+        response: .type(Page<GetPlaceCategoryDTO>.self)
       )
     
     adminProtected.post(use: self.create)
@@ -69,13 +78,23 @@ struct PlaceCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> [GetPlaceCategoryDTO] {
+  func index(req: Request) async throws -> [GetPlaceCategoryDTO] {
     try await PlaceCategory.query(on: req.db)
       .sort(\.$name)
       .all()
       .map { category in try GetPlaceCategoryDTO(from: category) }
   }
   
+  @Sendable
+  func getAll(req: Request) async throws -> Page<GetPlaceCategoryDTO> {
+    try QueryPageDTO.validate(query: req)
+
+    return try await PlaceCategory.query(on: req.db)
+      .sort(\.$name)
+      .paginate(for: req)
+      .map { category in try GetPlaceCategoryDTO(from: category) }
+  }
+
   @Sendable
   func patchByID(req: Request) async throws -> GetPlaceCategoryDTO {
     let id = try req.parameters.require("placeCategoryID", as: UUID.self)
