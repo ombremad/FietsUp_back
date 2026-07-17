@@ -36,7 +36,8 @@ struct ForumCategoryController: RouteCollection {
         tags: "Forum", "Categories",
         summary: "List",
         description: "List forum categories",
-        response: .type([GetForumCategoryWithCountsDTO].self)
+        query: .type(QueryPageDTO.self),
+        response: .type(Page<GetForumCategoryWithCountsDTO>.self)
       )
     
     userProtected.get(use: self.getIndex)
@@ -86,14 +87,16 @@ struct ForumCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> [GetForumCategoryWithCountsDTO] {
-    let categories = try await ForumCategory.query(on: req.db)
+  func getAll(req: Request) async throws -> Page<GetForumCategoryWithCountsDTO> {
+    try QueryPageDTO.validate(query: req)
+
+    let page = try await ForumCategory.query(on: req.db)
       .sort(\.$name)
-      .all()
+      .paginate(for: req)
+
+    let countsByCategoryID = try await postCounts(for: page.items, on: req.db)
     
-    let countsByCategoryID = try await postCounts(for: categories, on: req.db)
-    
-    return try categories.map { category in
+    return try page.map { category in
       try GetForumCategoryWithCountsDTO(from: category, totalPosts: countsByCategoryID[category.requireID()] ?? 0)
     }
   }

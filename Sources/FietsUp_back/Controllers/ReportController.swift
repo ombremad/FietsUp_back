@@ -27,6 +27,7 @@ struct ReportController: RouteCollection {
   
   @Sendable
   func pending(req: Request) async throws -> GetAllReportsDTO {
+    // TODO: refactoring needed for pagination
     async let forumPostReports = try await ForumPostReport.query(on: req.db)
       .filter(\.$processDate == nil)
       .sort(\.$creationDate, .ascending)
