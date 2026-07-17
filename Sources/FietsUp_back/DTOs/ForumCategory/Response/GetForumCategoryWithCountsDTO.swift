@@ -12,7 +12,7 @@ struct GetForumCategoryWithCountsDTO: Content {
   var id: UUID
   var name: String
   var details: String?
-  var lastActivityDate: Date?
+  var lastActivityDate: Date
   var totalPosts: Int?
 }
 

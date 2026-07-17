@@ -8,7 +8,7 @@ final class ForumCategory: Model, @unchecked Sendable {
   @ID(key: .id) var id: UUID?
   @Field(key: "name") var name: String
   @OptionalField(key: "details") var details: String?
-  @OptionalField(key: "last_activity_date") var lastActivityDate: Date?
+  @Field(key: "last_activity_date") var lastActivityDate: Date
 
   @Children(for: \.$forumCategory) var forumPosts: [ForumPost]
 
@@ -16,6 +16,9 @@ final class ForumCategory: Model, @unchecked Sendable {
   
   convenience init(from dto: CreateForumCategoryDTO) {
     self.init()
+    
+      // computed
+    self.lastActivityDate = .now
     
       // user provided
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)

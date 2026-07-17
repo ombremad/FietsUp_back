@@ -26,21 +26,21 @@ struct ForumCommentController: RouteCollection {
         tags: "Forum", "Comments",
         summary: "Create a forum comment",
         body: .type(CreateForumCommentDTO.self),
-        response: .type(GetForumPostDTO.self)
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
     
     userProtected.post(":forumCommentID", "like", use: self.like)
       .openAPI(
         tags: "Forum", "Comments",
         summary: "Like a forum comment, or unlike it if previously liked",
-        response: .type(GetForumPostDTO.self)
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
     
     userProtected.post(":forumCommentID", "fav", use: self.fav)
       .openAPI(
         tags: "Forum", "Comments",
         summary: "Favorite a forum comment, or unfavorite it if previously faved",
-        response: .type(GetForumPostDTO.self)
+        response: .type(GetForumPostWithCommentsDTO.self)
       )
     
     modProtected.patch(":forumCommentID", use: self.patchByID)
@@ -63,7 +63,7 @@ struct ForumCommentController: RouteCollection {
   }
   
   @Sendable
-  func create(req: Request) async throws -> GetForumPostDTO {
+  func create(req: Request) async throws -> GetForumPostWithCommentsDTO {
     try CreateForumCommentDTO.validate(content: req)
     let dto = try req.content.decode(CreateForumCommentDTO.self)
     
@@ -74,11 +74,11 @@ struct ForumCommentController: RouteCollection {
     let comment = ForumComment(from: dto, userID: userID, forumPostID: forumPostID)
     try await comment.save(on: req.db)
     
-    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
   
   @Sendable
-  func like(req: Request) async throws -> GetForumPostDTO {
+  func like(req: Request) async throws -> GetForumPostWithCommentsDTO {
     let userID = try req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
     guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "ForumComment not found") }
@@ -97,11 +97,11 @@ struct ForumCommentController: RouteCollection {
       try await newLike.save(on: req.db)
     }
 
-    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
   
   @Sendable
-  func fav(req: Request) async throws -> GetForumPostDTO {
+  func fav(req: Request) async throws -> GetForumPostWithCommentsDTO {
     let userID = try req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
     guard let forumComment = try await ForumComment.find(forumCommentID, on: req.db) else { throw Abort(.notFound, reason: "ForumComment not found") }
@@ -120,7 +120,7 @@ struct ForumCommentController: RouteCollection {
       try await newFav.save(on: req.db)
     }
     
-    return try await populateForumPostDTO(from: forumPost, userID: userID, on: req.db)
+    return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
   
   @Sendable

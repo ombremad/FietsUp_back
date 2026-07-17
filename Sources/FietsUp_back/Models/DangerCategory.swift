@@ -9,7 +9,7 @@ final class DangerCategory: Model, @unchecked Sendable {
 
   @Field(key: "name") var name: String
   @Field(key: "icon_name") var iconName: String
-  @OptionalField(key: "last_activity_date") var lastActivityDate: Date?
+  @Field(key: "last_activity_date") var lastActivityDate: Date
 
   @Children(for: \.$dangerCategory) var dangerPosts: [DangerPost]
 
@@ -17,6 +17,9 @@ final class DangerCategory: Model, @unchecked Sendable {
   
   convenience init(from dto: CreateDangerCategoryDTO) {
     self.init()
+    
+      // computed
+    self.lastActivityDate = .now
     
       // user provided
     self.name = dto.name.trimmingCharacters(in: .whitespacesAndNewlines)

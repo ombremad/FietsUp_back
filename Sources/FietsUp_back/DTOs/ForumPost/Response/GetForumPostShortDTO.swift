@@ -13,7 +13,7 @@ struct GetForumPostShortDTO: Content {
   var content: String
   var user: GetUserPublicDTO
   var creationDate: Date?
-  var lastActivityDate: Date?
+  var lastActivityDate: Date
 }
 
 extension GetForumPostShortDTO {
