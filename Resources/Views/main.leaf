@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/css/style.css">
+    <title>FietsUp Admin Panel</title>
+  </head>
+  <body>
+    #extend("components/toolbar")
+    #import("body")
+  </body>
+</html>

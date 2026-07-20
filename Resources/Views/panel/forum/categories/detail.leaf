@@ -1,0 +1,37 @@
+#extend("main"):
+#export("body"):
+
+<h2>Edit a forum category</h2>
+
+<form method="POST" action="/panel/forum/categories/#(category.id)">
+<table class="details">
+  <tr>
+    <td>ID</td>
+    <td>#(category.id)</td>
+  </tr>
+  <tr>
+    <td>Name</td>
+    <td><input type="text" name="name" value="#(category.name)"></td>
+  </tr>
+  <tr>
+    <td>Details</td>
+    <td><textarea name="details">#(category.details)</textarea></td>
+  </tr>
+  <tr>
+    <td>Posts count</td>
+    <td>#count(category.forumPosts)</td>
+  </tr>
+  <tr>
+    <td>Last activity</td>
+    <td>#date(category.lastActivityDate, "dd/MM/yyyy")</td>
+  </tr>
+</table>
+<button type="submit">Save changes</button>
+</form>
+
+<form method="POST" action="/panel/forum/categories/#(category.id)/delete" onsubmit="return confirm('Delete this forum category?');">
+  <button class="delete" type="submit">Delete</button>
+</form>
+
+#endexport
+#endextend

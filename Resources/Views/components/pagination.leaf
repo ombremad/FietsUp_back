@@ -1,0 +1,11 @@
+<div class="pagination">
+  #if(metadata.previousPage):
+  <a href="?page=#(metadata.previousPage)">← Previous</a>
+  #endif
+
+  <span>Page #(metadata.page) of #(metadata.pageCount)</span>
+
+  #if(metadata.nextPage):
+  <a href="?page=#(metadata.nextPage)">Next →</a>
+  #endif
+</div>

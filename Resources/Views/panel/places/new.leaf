@@ -1,0 +1,69 @@
+#extend("main"):
+#export("body"):
+
+<h2>New place</h2>
+
+<form method="POST" action="/panel/places">
+<table class="details">
+  <tr>
+    <td>Name</td>
+    <td><input type="text" name="name" required></td>
+  </tr>
+  <tr>
+    <td>Categories</td>
+    <td>
+      #for(category in categoryCheckboxes):
+      <label>
+        <input type="checkbox" name="categoriesIds" value="#(category.id)">
+        #(category.name)
+      </label><br>
+      #endfor
+    </td>
+  </tr>
+  <tr>
+    <td>Address</td>
+    <td><input type="text" name="address"></td>
+  </tr>
+    <tr>
+    <td>Zip code</td>
+    <td><input type="text" name="zipCode"></td>
+  </tr>
+  <tr>
+    <td>City</td>
+    <td><input type="text" name="city"></td>
+  </tr>
+  <tr>
+    <td>Country</td>
+    <td><input type="text" name="country"></td>
+  </tr>
+  <tr>
+    <td>Phone number</td>
+    <td><input type="text" name="phoneNumber"></td>
+  </tr>
+  <tr>
+    <td>Email</td>
+    <td><input type="text" name="email"></td>
+  </tr>
+  <tr>
+    <td>Website</td>
+    <td><input type="text" name="website"></td>
+  </tr>
+  <tr>
+    <td>Other details</td>
+    <td><input type="text" name="otherDetails"></td>
+  </tr>
+  <tr>
+    <td>Latitude</td>
+    <td><input type="text" name="latitude" required></td>
+  </tr>
+  <tr>
+    <td>Longitude</td>
+    <td><input type="text" name="longitude" required></td>
+  </tr>
+</table>
+<button type="submit">Create place</button>
+</form>
+
+#endexport
+#endextend
+

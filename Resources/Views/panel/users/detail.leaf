@@ -1,0 +1,44 @@
+#extend("main"):
+#export("body"):
+
+<h2>Edit a user</h2>
+
+<form method="POST" action="/panel/users/#(user.id)">
+<table class="details">
+  <tr>
+    <td>ID</td>
+    <td>#(user.id)</td>
+  </tr>
+  <tr>
+    <td>Email</td>
+    <td>#(user.email)</td>
+  <tr>
+    <td>Nickname</td>
+    <td><input type="text" name="nickname" value="#(user.nickname)"></td>
+  </tr>
+  <tr>
+    <td>First name</td>
+    <td><input type="text" name="firstName" value="#(user.firstName)"></td>
+  </tr>
+  <tr>
+    <td>Last name</td>
+    <td><input type="text" name="lastName" value="#(user.lastName)"></td>
+  </tr>
+  <tr>
+    <td>Biography</td>
+    <td><textarea name="bio">#(user.bio)</textarea></td>
+  </tr>
+  <tr>
+    <td>Account creation</td>
+    <td>#date(user.creationDate, "dd/MM/yyyy")</td>
+  </tr>
+  <tr>
+    <td>Admin rights</td>
+    <td><input type="number" name="adminRights" value="#(user.adminRights)" min="0" max="2"></td>
+  </tr>
+</table>
+<button type="submit">Save changes</button>
+</form>
+
+#endexport
+#endextend

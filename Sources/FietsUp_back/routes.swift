@@ -45,7 +45,7 @@ func routes(_ app: Application) throws {
     )
   }
   .excludeFromOpenAPI()
-
+  
   // CONTROLLERS
   // feature: users management
   try app.register(collection: UserController())
@@ -82,4 +82,10 @@ func routes(_ app: Application) throws {
   // feature: places
   try app.register(collection: PlaceController())
   try app.register(collection: PlaceCategoryController())
+  
+  // feature: web admin panel
+  try app.register(collection: WebMainController())
+  try app.register(collection: WebForumCategoryController())
+  try app.register(collection: WebPlaceController())
+  try app.register(collection: WebUserController())
 }

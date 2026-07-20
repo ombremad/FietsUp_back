@@ -77,5 +77,5 @@ extension Place {
     }
     if let latitude = dto.latitude { self.latitude = latitude }
     if let longitude = dto.longitude { self.longitude = longitude }
-  }
+  }  
 }

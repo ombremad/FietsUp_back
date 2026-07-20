@@ -1,0 +1,4 @@
+<nav class="toolbar">
+  <a href="/panel/home">Home</a>
+  <a href="/panel/logout">Logout</a>
+</nav>

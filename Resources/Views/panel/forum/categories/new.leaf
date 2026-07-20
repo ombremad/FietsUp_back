@@ -1,0 +1,21 @@
+#extend("main"):
+#export("body"):
+
+<h2>New forum category</h2>
+
+<form method="POST" action="/panel/forum/categories">
+<table class="details">
+  <tr>
+    <td>Name</td>
+    <td><input type="text" name="name" required></td>
+  </tr>
+  <tr>
+    <td>Details</td>
+    <td><textarea name="details" required></textarea></td>
+  </tr>
+</table>
+<button type="submit">Create forum category</button>
+</form>
+
+#endexport
+#endextend

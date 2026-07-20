@@ -1,0 +1,84 @@
+#extend("main"):
+#export("body"):
+
+<h2>Edit a place</h2>
+
+<form method="POST" action="/panel/places/#(place.id)">
+<table class="details">
+  <tr>
+    <td>ID</td>
+    <td>#(place.id)</td>
+  </tr>
+  <tr>
+    <td>Name</td>
+    <td><input type="text" name="name" value="#(place.name)"></td>
+  </tr>
+  <tr>
+    <td>Categories</td>
+    <td>
+      #for(category in categoryCheckboxes):
+      <label>
+        <input type="checkbox" name="categoriesIds" value="#(category.id)" #if(category.isChecked):checked#endif>
+        #(category.name)
+      </label><br>
+      #endfor
+    </td>
+  </tr>
+  <tr>
+    <td>Address</td>
+    <td><input type="text" name="address" value="#(place.address)"></td>
+  </tr>
+    <tr>
+    <td>Zip code</td>
+    <td><input type="text" name="zipCode" value="#(place.zipCode)"></td>
+  </tr>
+  <tr>
+    <td>City</td>
+    <td><input type="text" name="city" value="#(place.city)"></td>
+  </tr>
+  <tr>
+    <td>Country</td>
+    <td><input type="text" name="country" value="#(place.country)"></td>
+  </tr>
+  <tr>
+    <td>Phone number</td>
+    <td><input type="text" name="phoneNumber" value="#(place.phoneNumber)"></td>
+  </tr>
+  <tr>
+    <td>Email</td>
+    <td><input type="text" name="email" value="#(place.email)"></td>
+  </tr>
+  <tr>
+    <td>Website</td>
+    <td><input type="text" name="website" value="#(place.website)"></td>
+  </tr>
+  <tr>
+    <td>Other details</td>
+    <td><input type="text" name="otherDetails" value="#(place.otherDetails)"></td>
+  </tr>
+  <tr>
+    <td>Latitude</td>
+    <td><input type="text" name="latitude" value="#(place.latitude)"></td>
+  </tr>
+  <tr>
+    <td>Longitude</td>
+    <td><input type="text" name="longitude" value="#(place.longitude)"></td>
+  </tr>
+  <tr>
+    <td>Creation date</td>
+    <td>#date(place.creationDate, "dd/MM/yyyy")</td>
+  </tr>
+  <tr>
+    <td>Last update</td>
+    <td>#date(place.lastUpdateDate, "dd/MM/yyyy")</td>
+  </tr>
+</table>
+<button type="submit">Save changes</button>
+</form>
+
+<form method="POST" action="/panel/places/#(place.id)/delete" onsubmit="return confirm('Delete this place?');">
+  <button class="delete" type="submit">Delete</button>
+</form>
+
+#endexport
+#endextend
