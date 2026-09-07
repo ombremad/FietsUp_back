@@ -44,9 +44,6 @@ public func configure(_ app: Application) async throws {
   decoder.dateDecodingStrategy = .iso8601
   ContentConfiguration.global.use(decoder: decoder, for: .json)
   
-  // Import Leaf (templating system to generate webviews)
-  app.views.use(.leaf)
-  
   // migrations and routes
   try routes(app)
 }
