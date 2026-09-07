@@ -13,6 +13,10 @@ struct ModerationCategoryController: RouteCollection {
     
     let request = routes.grouped("moderation", "categories")
     
+    let userProtected = request
+      .grouped(JWTMiddleware())
+      .groupedOpenAPI(auth: .bearer(id: "BearerAuth", format: "JWT"))
+
     let adminProtected = request
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
@@ -26,15 +30,14 @@ struct ModerationCategoryController: RouteCollection {
         response: .type(GetModerationCategoryDTO.self)
       )
     
-    adminProtected.get(use: self.getAll)
+    userProtected.get(use: self.getAll)
       .openAPI(
         tags: "Moderation", "Categories",
         summary: "List",
         description: "List all available moderation categories",
-        query: .type(QueryPageDTO.self),
-        response: .type(Page<GetModerationCategoryDTO>.self)
+        response: .type([GetModerationCategoryDTO].self)
       )
-    
+        
     adminProtected.patch(":id", use: self.patchByID)
       .openAPI(
         tags: "Moderation", "Categories",
@@ -57,13 +60,12 @@ struct ModerationCategoryController: RouteCollection {
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> Page<GetModerationCategoryDTO> {
-    try QueryPageDTO.validate(query: req)
-
-    return try await ModerationCategory.query(on: req.db)
+  func getAll(req: Request) async throws -> [GetModerationCategoryDTO] {
+    let categories = try await ModerationCategory.query(on: req.db)
       .sort(\.$name)
-      .paginate(for: req)
-      .map { category in try GetModerationCategoryDTO(from: category) }
+      .all()
+    
+    return try categories.map { category in try GetModerationCategoryDTO(from: category) }
   }
   
   @Sendable

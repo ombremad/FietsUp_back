@@ -45,7 +45,7 @@ func routes(_ app: Application) throws {
     )
   }
   .excludeFromOpenAPI()
-
+  
   // CONTROLLERS
   // feature: users management
   try app.register(collection: UserController())
