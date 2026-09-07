@@ -82,6 +82,7 @@ struct PlaceController: RouteCollection {
       .all()
     try await place.$categories.attach(categories, on: req.db)
     try await place.$categories.load(on: req.db)
+    try await place.$ratings.load(on: req.db)
     return try GetPlaceDTO(from: place)
   }
   
@@ -120,6 +121,7 @@ struct PlaceController: RouteCollection {
     let places = try await Place.query(on: req.db)
       .filter(\.$id ~~ orderedIds)
       .with(\.$categories)
+      .with(\.$ratings)
       .all()
     
     return try orderedIds.compactMap { id in places.first { $0.id == id } }
@@ -133,6 +135,7 @@ struct PlaceController: RouteCollection {
     return try await Place.query(on: req.db)
       .sort(\.$name)
       .with(\.$categories)
+      .with(\.$ratings)
       .paginate(for: req)
       .map { place in try GetPlaceDTO(from: place) }
   }
@@ -155,6 +158,7 @@ struct PlaceController: RouteCollection {
       try await place.$categories.attach(categories, on: req.db)
     }
     try await place.$categories.load(on: req.db)
+    try await place.$ratings.load(on: req.db)
 
     return try GetPlaceDTO(from: place)
   }
@@ -172,6 +176,7 @@ struct PlaceController: RouteCollection {
     let place = try await Place.query(on: db)
       .filter(\.$id == id)
       .with(\.$categories)
+      .with(\.$ratings)
       .first()
     return try returnOrFail(place)
   }
