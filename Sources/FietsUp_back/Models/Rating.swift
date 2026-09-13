@@ -1,6 +1,5 @@
 import Fluent
-
-import struct Foundation.UUID
+import Foundation
 
 final class Rating: Model, @unchecked Sendable {
   static let schema = "ratings"
@@ -13,4 +12,21 @@ final class Rating: Model, @unchecked Sendable {
   @Parent(key: "id_place") var place: Place
 
   init() {}
+  
+  convenience init(from dto: CreateRatingDTO, userID: UUID, placeID: UUID) {
+    self.init()
+    
+      // computed
+    self.$user.id = userID
+    self.$place.id = placeID
+
+      // user provided
+    self.note = dto.note
+  }
+}
+
+extension Rating {
+  func update(with dto: CreateRatingDTO) {
+    self.note = dto.note
+  }
 }

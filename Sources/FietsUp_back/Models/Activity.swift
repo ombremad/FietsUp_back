@@ -1,6 +1,5 @@
 import Fluent
-
-import struct Foundation.UUID
+import Foundation
 
 final class Activity: Model, @unchecked Sendable {
   static let schema = "activities"

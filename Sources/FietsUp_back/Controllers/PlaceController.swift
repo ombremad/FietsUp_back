@@ -31,6 +31,16 @@ struct PlaceController: RouteCollection {
         response: .type(GetPlaceDTO.self)
       )
     
+    userProtected.post(":placeID", "rating", use: self.rate)
+      .openAPI(
+        tags: "Places",
+        summary: "Rate",
+        description: "Rate a place",
+        path: .type(UUID.self),
+        body: .type(CreateRatingDTO.self),
+        response: .type(GetPlaceDTO.self)
+      )
+    
     userProtected.get("near", use: self.getNearest)
       .openAPI(
         tags: "Places",
@@ -83,6 +93,37 @@ struct PlaceController: RouteCollection {
     try await place.$categories.attach(categories, on: req.db)
     try await place.$categories.load(on: req.db)
     try await place.$ratings.load(on: req.db)
+    return try GetPlaceDTO(from: place)
+  }
+  
+  @Sendable
+  func rate(req: Request) async throws -> GetPlaceDTO {
+    let userID = try req.requireUser().requireID()
+    let placeID = try req.parameters.require("placeID", as: UUID.self)
+    
+    guard try await Place.query(on: req.db)
+      .filter(\.$id == placeID)
+      .first() != nil
+    else {
+      throw Abort(.notFound)
+    }
+    
+    try CreateRatingDTO.validate(content: req)
+    let dto = try req.content.decode(CreateRatingDTO.self)
+    
+    if let existing = try await Rating.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$place.$id == placeID)
+      .first()
+    {
+      existing.update(with: dto)
+      try await existing.save(on: req.db)
+    } else {
+      let rating = Rating(from: dto, userID: userID, placeID: placeID)
+      try await rating.save(on: req.db)
+    }
+    
+    let place = try await find(id: placeID, on: req.db)
     return try GetPlaceDTO(from: place)
   }
   
@@ -180,5 +221,4 @@ struct PlaceController: RouteCollection {
       .first()
     return try returnOrFail(place)
   }
-
 }

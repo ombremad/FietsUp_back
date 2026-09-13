@@ -15,6 +15,6 @@ struct QueryPageDTO: Content {
 extension QueryPageDTO: Validatable {
   static func validations(_ validations: inout Validations) {
     validations.add("page", as: Int.self, is: .range(1...), required: false)
-    validations.add("per", as: Int.self, is: .range(1...), required: false)
+    validations.add("per", as: Int.self, is: .range(1...20), required: false)
   }
 }

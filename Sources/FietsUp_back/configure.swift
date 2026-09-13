@@ -12,16 +12,22 @@ public func configure(_ app: Application) async throws {
    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
   // MySQL
+  var tls = TLSConfiguration.makeClientConfiguration()
+  if Environment.get("DATABASE_HOST") == nil || Environment.get("DATABASE_HOST") == "localhost" {
+    tls.certificateVerification = .none
+  }
+  
   app.databases.use(
     DatabaseConfigurationFactory.mysql(
       hostname: Environment.get("DATABASE_HOST") ?? "localhost",
       port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:))
-        ?? MySQLConfiguration.ianaPortNumber,
+      ?? MySQLConfiguration.ianaPortNumber,
       username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
       password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
-      database: Environment.get("DATABASE_NAME") ?? "vapor_database"
+      database: Environment.get("DATABASE_NAME") ?? "vapor_database",
+      tlsConfiguration: tls
     ), as: .mysql)
-
+  
   // Cors
   let corsConfiguration = CORSMiddleware.Configuration(
     allowedOrigin: .none,

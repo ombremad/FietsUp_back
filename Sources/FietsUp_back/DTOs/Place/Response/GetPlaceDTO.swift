@@ -21,7 +21,7 @@ struct GetPlaceDTO: Content {
   var otherDetails: String?
   var latitude: Double
   var longitude: Double
-  var averageRating: Int?
+  var averageRating: Double?
   var creationDate: Date?
   var lastUpdateDate: Date?
 }
@@ -30,14 +30,15 @@ extension GetPlaceDTO {
   init(from model: Place) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
     
-    let averageRating: Int?
+    let averageRating: Double?
     if model.$ratings.value != nil {
       let ratings = model.ratings
       if ratings.isEmpty {
         averageRating = nil
       } else {
         let sum = ratings.reduce(0) { $0 + $1.note }
-        averageRating = sum / ratings.count
+        let rawAverage = Double(sum) / Double(ratings.count)
+        averageRating = (rawAverage * 2).rounded() / 2
       }
     } else {
       averageRating = nil
