@@ -13,7 +13,7 @@ final class Rating: Model, @unchecked Sendable {
 
   init() {}
   
-  convenience init(from dto: CreateRatingDTO, userID: UUID, placeID: UUID) {
+  convenience init(from dto: CreateOrPatchRatingDTO, userID: UUID, placeID: UUID) {
     self.init()
     
       // computed
@@ -26,7 +26,7 @@ final class Rating: Model, @unchecked Sendable {
 }
 
 extension Rating {
-  func update(with dto: CreateRatingDTO) {
+  func update(with dto: CreateOrPatchRatingDTO) {
     self.note = dto.note
   }
 }

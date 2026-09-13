@@ -28,7 +28,7 @@ struct PlaceController: RouteCollection {
         summary: "Create",
         description: "Create a place",
         body: .type(CreatePlaceDTO.self),
-        response: .type(GetPlaceDTO.self)
+        response: .type(GetPlaceWithRatingDTO.self)
       )
     
     userProtected.post(":placeID", "rating", use: self.rate)
@@ -37,8 +37,8 @@ struct PlaceController: RouteCollection {
         summary: "Rate",
         description: "Rate a place",
         path: .type(UUID.self),
-        body: .type(CreateRatingDTO.self),
-        response: .type(GetPlaceDTO.self)
+        body: .type(CreateOrPatchRatingDTO.self),
+        response: .type(GetPlaceWithRatingDTO.self)
       )
     
     userProtected.get("near", use: self.getNearest)
@@ -47,7 +47,7 @@ struct PlaceController: RouteCollection {
         summary: "Near",
         description: "Get nearest places sorted",
         query: .type(QueryPlaceDTO.self),
-        response: .type([GetPlaceDTO].self)
+        response: .type([GetPlaceWithRatingDTO].self)
       )
     
     adminProtected.get(use: self.getAll)
@@ -56,7 +56,7 @@ struct PlaceController: RouteCollection {
         summary: "List",
         description: "List all available places",
         query: .type(QueryPageDTO.self),
-        response: .type(Page<GetPlaceDTO>.self)
+        response: .type(Page<GetPlaceWithRatingDTO>.self)
       )
     
     adminProtected.patch(":placeID", use: self.patchByID)
@@ -66,7 +66,7 @@ struct PlaceController: RouteCollection {
         description: "Find and patch an existing place by id",
         path: .type(UUID.self),
         body: .type(PatchPlaceDTO.self),
-        response: .type(GetPlaceDTO.self)
+        response: .type(GetPlaceWithRatingDTO.self)
       )
     
     adminProtected.delete(":placeID", use: self.deleteByID)
@@ -80,7 +80,7 @@ struct PlaceController: RouteCollection {
   }
 
   @Sendable
-  func create(req: Request) async throws -> GetPlaceDTO {
+  func create(req: Request) async throws -> GetPlaceWithRatingDTO {
     try CreatePlaceDTO.validate(content: req)
     let dto = try req.content.decode(CreatePlaceDTO.self)
     
@@ -93,11 +93,11 @@ struct PlaceController: RouteCollection {
     try await place.$categories.attach(categories, on: req.db)
     try await place.$categories.load(on: req.db)
     try await place.$ratings.load(on: req.db)
-    return try GetPlaceDTO(from: place)
+    return try GetPlaceWithRatingDTO(from: place)
   }
   
   @Sendable
-  func rate(req: Request) async throws -> GetPlaceDTO {
+  func rate(req: Request) async throws -> GetPlaceWithRatingDTO {
     let userID = try req.requireUser().requireID()
     let placeID = try req.parameters.require("placeID", as: UUID.self)
     
@@ -108,8 +108,8 @@ struct PlaceController: RouteCollection {
       throw Abort(.notFound)
     }
     
-    try CreateRatingDTO.validate(content: req)
-    let dto = try req.content.decode(CreateRatingDTO.self)
+    try CreateOrPatchRatingDTO.validate(content: req)
+    let dto = try req.content.decode(CreateOrPatchRatingDTO.self)
     
     if let existing = try await Rating.query(on: req.db)
       .filter(\.$user.$id == userID)
@@ -124,11 +124,11 @@ struct PlaceController: RouteCollection {
     }
     
     let place = try await find(id: placeID, on: req.db)
-    return try GetPlaceDTO(from: place)
+    return try GetPlaceWithRatingDTO(from: place)
   }
   
   @Sendable
-  func getNearest(req: Request) async throws -> [GetPlaceDTO] {
+  func getNearest(req: Request) async throws -> [GetPlaceWithRatingDTO] {
     try QueryPlaceDTO.validate(query: req)
     let query = try req.query.decode(QueryPlaceDTO.self)
     let radius = 50_000
@@ -166,11 +166,11 @@ struct PlaceController: RouteCollection {
       .all()
     
     return try orderedIds.compactMap { id in places.first { $0.id == id } }
-      .map { try GetPlaceDTO(from: $0) }
+      .map { try GetPlaceWithRatingDTO(from: $0) }
   }
   
   @Sendable
-  func getAll(req: Request) async throws -> Page<GetPlaceDTO> {
+  func getAll(req: Request) async throws -> Page<GetPlaceWithRatingDTO> {
     try QueryPageDTO.validate(query: req)
 
     return try await Place.query(on: req.db)
@@ -178,11 +178,11 @@ struct PlaceController: RouteCollection {
       .with(\.$categories)
       .with(\.$ratings)
       .paginate(for: req)
-      .map { place in try GetPlaceDTO(from: place) }
+      .map { place in try GetPlaceWithRatingDTO(from: place) }
   }
   
   @Sendable
-  func patchByID(req: Request) async throws -> GetPlaceDTO {
+  func patchByID(req: Request) async throws -> GetPlaceWithRatingDTO {
     let id = try req.parameters.require("placeID", as: UUID.self)
     let place = try await find(id: id, on: req.db)
     
@@ -201,7 +201,7 @@ struct PlaceController: RouteCollection {
     try await place.$categories.load(on: req.db)
     try await place.$ratings.load(on: req.db)
 
-    return try GetPlaceDTO(from: place)
+    return try GetPlaceWithRatingDTO(from: place)
   }
   
   @Sendable

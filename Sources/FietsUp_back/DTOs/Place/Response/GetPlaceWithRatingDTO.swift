@@ -1,5 +1,5 @@
 //
-//  GetPlaceDTO.swift
+//  GetPlaceWithRatingDTO.swift
 //  FietsUp_back
 //
 //  Created by Anne Ferret on 25/03/2026.
@@ -7,7 +7,7 @@
 
 import Vapor
 
-struct GetPlaceDTO: Content {
+struct GetPlaceWithRatingDTO: Content {
   var id: UUID
   var name: String
   var categories: [PlaceCategory]
@@ -26,22 +26,18 @@ struct GetPlaceDTO: Content {
   var lastUpdateDate: Date?
 }
 
-extension GetPlaceDTO {
+extension GetPlaceWithRatingDTO {
   init(from model: Place) throws {
     guard let id = model.id else { throw Abort(.internalServerError) }
     
     let averageRating: Double?
-    if model.$ratings.value != nil {
-      let ratings = model.ratings
-      if ratings.isEmpty {
-        averageRating = nil
-      } else {
-        let sum = ratings.reduce(0) { $0 + $1.note }
-        let rawAverage = Double(sum) / Double(ratings.count)
-        averageRating = (rawAverage * 2).rounded() / 2
-      }
-    } else {
+    let ratings = model.ratings
+    if ratings.isEmpty {
       averageRating = nil
+    } else {
+      let sum = ratings.reduce(0) { $0 + $1.note }
+      let rawAverage = Double(sum) / Double(ratings.count)
+      averageRating = (rawAverage * 100).rounded() / 100
     }
     
     self.init(
