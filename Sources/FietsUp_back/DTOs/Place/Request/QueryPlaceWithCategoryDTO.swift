@@ -8,9 +8,9 @@
 import Vapor
 
 struct QueryPlaceWithCategoryDTO: Content, PageValidatable {
+  let categoryID: UUID?
   let page: Int?
   let per: Int?
-  let categoryID: UUID?
 }
 
 extension QueryPlaceWithCategoryDTO {

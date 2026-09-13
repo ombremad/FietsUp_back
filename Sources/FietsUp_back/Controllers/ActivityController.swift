@@ -25,13 +25,16 @@ struct ActivityController: RouteCollection {
         body: .type(CreateActivityDTO.self),
         response: .type(GetActivityDTO.self)
       )
+    
     userProtected.get(use: self.getAll)
       .openAPI(
         tags: "Activities",
         summary: "List",
         description: "Get all activities for current user",
-        response: .type([GetActivityDTO].self),
+        query: .type(QueryActivityWithDateDTO.self),
+        response: .type(Page<GetActivityDTO>.self),
       )
+    
     userProtected.delete(":id", use: self.deleteByID)
       .openAPI(
         tags: "Activities",
@@ -70,17 +73,26 @@ struct ActivityController: RouteCollection {
   }
 
   @Sendable
-  func getAll(req: Request) async throws -> [GetActivityDTO] {
-    let user = try req.requireUser()
-    let userID = try user.requireID()
+  func getAll(req: Request) async throws -> Page<GetActivityDTO> {
+    try QueryActivityWithDateDTO.validate(query: req)
+    let query = try req.query.decode(QueryActivityWithDateDTO.self)
+    let userID = try req.requireUser().requireID()
     
-    let activities = try await Activity.query(on: req.db)
+    var activityQuery = Activity.query(on: req.db)
       .filter(\.$user.$id == userID)
-      .sort(\.$endDate, .descending)
-      .all()
-    return try activities.map { activity in
-      try GetActivityDTO(from: activity)
+    
+    if let start = query.start {
+      activityQuery = activityQuery.filter(\.$startDate >= start)
     }
+    
+    if let end = query.end {
+      activityQuery = activityQuery.filter(\.$endDate <= end)
+    }
+    
+    return try await activityQuery
+      .sort(\.$endDate, .descending)
+      .paginate(for: req)
+      .map { activity in try GetActivityDTO(from: activity) }
   }
 
   @Sendable
