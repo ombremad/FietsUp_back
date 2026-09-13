@@ -46,7 +46,7 @@ struct PlaceController: RouteCollection {
         tags: "Places",
         summary: "Near",
         description: "Get nearest places sorted",
-        query: .type(QueryPlaceDTO.self),
+        query: .type(QueryPlaceWithCategoryAndLocationDTO.self),
         response: .type([GetPlaceWithRatingDTO].self)
       )
     
@@ -55,7 +55,7 @@ struct PlaceController: RouteCollection {
         tags: "Places",
         summary: "List",
         description: "List all available places",
-        query: .type(QueryPageDTO.self),
+        query: .type(QueryPlaceWithCategoryDTO.self),
         response: .type(Page<GetPlaceWithRatingDTO>.self)
       )
     
@@ -129,34 +129,42 @@ struct PlaceController: RouteCollection {
   
   @Sendable
   func getNearest(req: Request) async throws -> [GetPlaceWithRatingDTO] {
-    try QueryPlaceDTO.validate(query: req)
-    let query = try req.query.decode(QueryPlaceDTO.self)
+    try QueryPlaceWithCategoryAndLocationDTO.validate(query: req)
+    let query = try req.query.decode(QueryPlaceWithCategoryAndLocationDTO.self)
     let radius = 50_000
     let limit = 50
-
+    
     guard let sql = req.db as? (any SQLDatabase) else {
       throw Abort(.internalServerError)
     }
     
     struct NearbyResult: Decodable { let id: UUID }
     
+    let categoryJoin: SQLQueryString = query.categoryID.map {
+      "JOIN place_categorization pcz ON pcz.id_place = pl.id AND pcz.id_place_category = \(bind: $0)"
+    } ?? ""
+    
+    let distanceExpression: SQLQueryString = """
+    ST_Distance_Sphere(
+        pl.location,
+        ST_GeomFromText(
+            CONCAT('POINT(', \(bind: query.longitude), ' ', \(bind: query.latitude), ')'),
+            4326
+        )
+    )
+    """
+    
     let orderedIds = try await sql.raw("""
     SELECT p.id FROM (
-        SELECT id,
-            ST_Distance_Sphere(
-                location,
-                ST_GeomFromText(
-                    CONCAT('POINT(', \(bind: query.longitude), ' ', \(bind: query.latitude), ')'),
-                    4326
-                )
-            ) AS distance
-        FROM places
+        SELECT pl.id, \(distanceExpression) AS distance
+        FROM places pl
+        \(categoryJoin)
     ) AS p
     WHERE p.distance <= \(bind: radius)
     ORDER BY p.distance
     LIMIT \(bind: limit)
     """).all(decoding: NearbyResult.self).map(\.id)
-
+    
     guard !orderedIds.isEmpty else { return [] }
     
     let places = try await Place.query(on: req.db)
@@ -171,14 +179,20 @@ struct PlaceController: RouteCollection {
   
   @Sendable
   func getAll(req: Request) async throws -> Page<GetPlaceWithRatingDTO> {
-    try QueryPageDTO.validate(query: req)
-
-    return try await Place.query(on: req.db)
+    try QueryPlaceWithCategoryDTO.validate(query: req)
+    
+    var query = Place.query(on: req.db)
       .sort(\.$name)
       .with(\.$categories)
       .with(\.$ratings)
-      .paginate(for: req)
-      .map { place in try GetPlaceWithRatingDTO(from: place) }
+    
+    if let categoryID = try req.query.decode(QueryPlaceWithCategoryDTO.self).categoryID {
+      query = query
+        .join(PlaceCategorization.self, on: \Place.$id == \PlaceCategorization.$place.$id)
+        .filter(PlaceCategorization.self, \.$placeCategory.$id == categoryID)
+    }
+    
+    return try await query.paginate(for: req).map { place in try GetPlaceWithRatingDTO(from: place) }
   }
   
   @Sendable
