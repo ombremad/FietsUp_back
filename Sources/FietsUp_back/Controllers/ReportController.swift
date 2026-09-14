@@ -27,36 +27,43 @@ struct ReportController: RouteCollection {
   
   @Sendable
   func pending(req: Request) async throws -> GetAllReportsDTO {
-    // TODO: refactoring needed for pagination
     async let forumPostReports = try await ForumPostReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .sort(\.$creationDate, .ascending)
       .with(\.$forumPost, { $0.with(\.$user) })
       .with(\.$user)
       .with(\.$moderationCategory)
+      .sort(\.$creationDate, .ascending)
       .all()
+    
     async let forumCommentReports = try await ForumCommentReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .sort(\.$creationDate, .ascending)
       .with(\.$forumComment, { $0.with(\.$user) })
       .with(\.$user)
       .with(\.$moderationCategory)
+      .sort(\.$creationDate, .ascending)
       .all()
+    
    async let dangerPostReports = try await DangerPostReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .sort(\.$creationDate, .ascending)
       .with(\.$dangerPost, { $0.with(\.$user).with(\.$dangerCategory) })
       .with(\.$user)
       .with(\.$moderationCategory)
+      .sort(\.$creationDate, .ascending)
       .all()
+    
     async let dangerCommentReports = try await DangerCommentReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .sort(\.$creationDate, .ascending)
       .with(\.$dangerComment, { $0.with(\.$user) })
       .with(\.$user)
       .with(\.$moderationCategory)
+      .sort(\.$creationDate, .ascending)
       .all()
 
-    return try await GetAllReportsDTO(forumPosts: forumPostReports, forumComments: forumCommentReports, dangerPosts: dangerPostReports, dangerComments: dangerCommentReports)
+    return try await GetAllReportsDTO(
+      forumPosts: forumPostReports,
+      forumComments: forumCommentReports,
+      dangerPosts: dangerPostReports,
+      dangerComments: dangerCommentReports,
+    )
   }
 }
