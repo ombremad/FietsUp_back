@@ -15,6 +15,6 @@ protocol PageValidatable: Validatable {
 extension PageValidatable {
   static func validatePagination(_ validations: inout Validations) {
     validations.add("page", as: Int.self, is: .range(1...), required: false)
-    validations.add("per", as: Int.self, is: .range(1...20), required: false)
+    validations.add("per", as: Int.self, is: .range(1...25), required: false)
   }
 }

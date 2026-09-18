@@ -31,6 +31,15 @@ struct PlaceController: RouteCollection {
         response: .type(GetPlaceWithRatingDTO.self)
       )
     
+    adminProtected.post("batch", use: self.createBatch)
+      .openAPI(
+        tags: "Places",
+        summary: "Create batch",
+        description: "Create several places at once",
+        body: .type([CreatePlaceDTO].self),
+        response: .type([GetPlaceCategoryDTO].self)
+      )
+    
     userProtected.post(":placeID", "rating", use: self.rate)
       .openAPI(
         tags: "Places",
@@ -94,6 +103,43 @@ struct PlaceController: RouteCollection {
     try await place.$categories.load(on: req.db)
     try await place.$ratings.load(on: req.db)
     return try GetPlaceWithRatingDTO(from: place)
+  }
+  
+  // This route is only used with manual API calls (cURL, Postman...) for now.
+  @Sendable
+  func createBatch(req: Request) async throws -> [GetPlaceWithRatingDTO] {
+    let dtos = try req.content.decode([CreatePlaceDTO].self)
+    
+    let encoder = JSONEncoder()
+    for dto in dtos {
+      let jsonData = try encoder.encode(dto)
+      let jsonString = String(decoding: jsonData, as: UTF8.self)
+      try CreatePlaceDTO.validate(json: jsonString)
+    }
+    
+    let allCategoryIds = Set(dtos.flatMap { $0.categoriesIds })
+    let allCategories = try await PlaceCategory.query(on: req.db)
+      .filter(\.$id ~~ Array(allCategoryIds))
+      .all()
+    let categoriesById = Dictionary(uniqueKeysWithValues: allCategories.map { ($0.id!, $0) })
+    
+    return try await req.db.transaction { db in
+      var results: [GetPlaceWithRatingDTO] = []
+      
+      for dto in dtos {
+        let place = Place(from: dto)
+        try await place.save(on: db)
+        
+        let categories = dto.categoriesIds.compactMap { categoriesById[$0] }
+        try await place.$categories.attach(categories, on: db)
+        try await place.$categories.load(on: db)
+        try await place.$ratings.load(on: db)
+        
+        results.append(try GetPlaceWithRatingDTO(from: place))
+      }
+      
+      return results
+    }
   }
   
   @Sendable
