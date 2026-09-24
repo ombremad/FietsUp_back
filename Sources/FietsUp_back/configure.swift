@@ -4,12 +4,11 @@ import Gatekeeper
 import NIOSSL
 import Vapor
 import VaporToOpenAPI
-import Leaf
 
 // configures your application
 public func configure(_ app: Application) async throws {
   // serve files from /Public folder
-   app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+  // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
   // MySQL
   var tls = TLSConfiguration.makeClientConfiguration()

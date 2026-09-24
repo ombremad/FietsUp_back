@@ -9,7 +9,7 @@ final class ForumCategory: Model, @unchecked Sendable {
   @ID(key: .id) var id: UUID?
   @Field(key: "name") var name: String
   @OptionalField(key: "details") var details: String?
-  @Field(key: "last_activity_date") var lastActivityDate: Date
+  @Timestamp(key: "last_activity_date", on: .create) var lastActivityDate: Date?
 
   @Children(for: \.$forumCategory) var forumPosts: [ForumPost]
 

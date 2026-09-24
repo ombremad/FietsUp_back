@@ -14,7 +14,7 @@ final class DangerPost: Model, @unchecked Sendable {
   @Field(key: "longitude") var longitude: Double
 
   @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
-  @Field(key: "last_activity_date") var lastActivityDate: Date
+  @Timestamp(key: "last_activity_date", on: .create) var lastActivityDate: Date?
 
   @Parent(key: "id_user") var user: User
   @Parent(key: "id_danger_category") var dangerCategory: DangerCategory

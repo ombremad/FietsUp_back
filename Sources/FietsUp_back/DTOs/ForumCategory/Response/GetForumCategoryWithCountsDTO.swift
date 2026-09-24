@@ -24,7 +24,7 @@ extension GetForumCategoryWithCountsDTO {
       id: id,
       name: model.name,
       details: model.details,
-      lastActivityDate: model.lastActivityDate,
+      lastActivityDate: model.lastActivityDate!,
       totalPosts: totalPosts
     )
   }

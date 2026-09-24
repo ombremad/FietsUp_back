@@ -11,7 +11,7 @@ final class ForumPost: Model, @unchecked Sendable {
   @Field(key: "content") var content: String
 
   @Timestamp(key: "creation_date", on: .create) var creationDate: Date?
-  @Field(key: "last_activity_date") var lastActivityDate: Date
+  @Timestamp(key: "last_activity_date", on: .create) var lastActivityDate: Date?
 
   @Parent(key: "id_user") var user: User
   @Parent(key: "id_forum_category") var forumCategory: ForumCategory

@@ -26,7 +26,7 @@ extension GetForumPostShortDTO {
       content: model.content,
       user: try GetUserPublicDTO(from: model.user),
       creationDate: model.creationDate,
-      lastActivityDate: model.lastActivityDate
+      lastActivityDate: model.lastActivityDate!
     )
   }
 }

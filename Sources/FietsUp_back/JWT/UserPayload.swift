@@ -14,12 +14,15 @@ struct UserPayload: JWTPayload, Authenticatable {
 
   func verify(using signer: JWTSigner) throws {
     if self.expiration < Date() {
-      throw JWTError.invalidJWK  // Throw an error if the token has expired
+      throw JWTError.invalidJWK
     }
   }
 
   init(id: UUID) {
+    let expiryDays = 7
+    let expiry = TimeInterval(3600 * 24 * expiryDays)
+    
     self.id = id
-    self.expiration = Date().addingTimeInterval(3600 * 24 * 7)  // Expire in 7 days
+    self.expiration = Date().addingTimeInterval(expiry)
   }
 }
