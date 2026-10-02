@@ -11,7 +11,7 @@ struct CreateUsers: AsyncMigration {
   func prepare(on database: any Database) async throws {
     try await database.schema("users")
       .id()
-    
+
       .field("first_name", .string, .required)
       .field("last_name", .string, .required)
       .field("nickname", .string, .required)
@@ -19,21 +19,23 @@ struct CreateUsers: AsyncMigration {
       .field("password", .string, .required)
       .field("creation_date", .datetime, .required)
       .field("ban_end_date", .datetime)
-      .field("admin_rights", .int, .required)
+      .field("admin_rights", .uint8, .required)
       .field("bio", .string)
-      .field("streak", .int, .required)
+      .field("streak", .uint16, .required)
       .field("streak_updated_this_week", .bool, .required)
-      .field("total_elapsed_distance", .int, .required)
-    
+      .field("total_elapsed_distance", .uint32, .required)
+
       .field("id_cycle_type", .uuid, .references("cycle_types", "id"))
       .field("id_cycle_color", .uuid, .references("cycle_colors", "id"))
       .field("id_cycle_decoration", .uuid, .references("cycle_decorations", "id"))
-    
+
+      .unique(on: "nickname")
+      .unique(on: "email")
+
       .create()
   }
-  
+
   func revert(on database: any Database) async throws {
     try await database.schema("users").delete()
   }
 }
-

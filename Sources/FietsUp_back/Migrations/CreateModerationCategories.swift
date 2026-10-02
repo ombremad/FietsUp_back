@@ -11,8 +11,10 @@ struct CreateModerationCategories: AsyncMigration {
   func prepare(on database: any Database) async throws {
     try await database.schema("moderation_categories")
       .id()
-    
+
       .field("name", .string, .required)
+
+      .unique(on: "name")
 
       .create()
   }

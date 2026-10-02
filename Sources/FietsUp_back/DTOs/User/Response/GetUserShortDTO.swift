@@ -13,7 +13,7 @@ struct GetUserShortDTO: Content {
   var lastName: String
   var nickname: String
   var email: String
-  var creationDate: Date?
+  var creationDate: Date
 }
 
 extension GetUserShortDTO {
@@ -26,7 +26,7 @@ extension GetUserShortDTO {
       lastName: model.lastName,
       nickname: model.nickname,
       email: model.email,
-      creationDate: model.creationDate
+      creationDate: model.creationDate!
     )
   }
 }

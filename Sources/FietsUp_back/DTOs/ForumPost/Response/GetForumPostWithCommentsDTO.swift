@@ -13,7 +13,7 @@ struct GetForumPostWithCommentsDTO: Content {
   var title: String
   var content: String
   var user: GetUserPublicDTO
-  var creationDate: Date?
+  var creationDate: Date
   var likeCount: Int
   var likedByUser: Bool
   var favedByUser: Bool
@@ -29,7 +29,7 @@ extension GetForumPostWithCommentsDTO {
       title: model.title,
       content: model.content,
       user: try GetUserPublicDTO(from: model.user),
-      creationDate: model.creationDate,
+      creationDate: model.creationDate!,
       likeCount: likeCount,
       likedByUser: likedByUser,
       favedByUser: favedByUser,

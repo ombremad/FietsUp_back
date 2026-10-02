@@ -22,8 +22,8 @@ struct GetPlaceWithRatingDTO: Content {
   var latitude: Double
   var longitude: Double
   var averageRating: Double?
-  var creationDate: Date?
-  var lastUpdateDate: Date?
+  var creationDate: Date
+  var lastUpdateDate: Date
 }
 
 extension GetPlaceWithRatingDTO {
@@ -55,8 +55,8 @@ extension GetPlaceWithRatingDTO {
       latitude: model.latitude,
       longitude: model.longitude,
       averageRating: averageRating,
-      creationDate: model.creationDate,
-      lastUpdateDate: model.lastUpdateDate
+      creationDate: model.creationDate!,
+      lastUpdateDate: model.lastUpdateDate!
     )
   }
 }

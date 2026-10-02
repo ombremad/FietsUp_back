@@ -12,7 +12,8 @@ struct CreatePlaces: AsyncMigration {
   func prepare(on database: any Database) async throws {
     let builder = database.schema("places")
       .id()
-    
+
+      .field("name", .string, .required)
       .field("address", .string)
       .field("zip_code", .string)
       .field("city", .string)
@@ -25,14 +26,14 @@ struct CreatePlaces: AsyncMigration {
       .field("longitude", .double, .required)
       .field("creation_date", .datetime, .required)
       .field("last_update_date", .datetime, .required)
-    
+
     if database is any MySQLDatabase {
       builder.field("location", .sql(unsafeRaw: "POINT"), .required)
     }
 
     try await builder.create()
   }
-  
+
   func revert(on database: any Database) async throws {
     try await database.schema("places").delete()
   }

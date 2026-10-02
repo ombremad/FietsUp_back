@@ -11,7 +11,7 @@ struct GetForumPostReportDTO: Content {
   var id: UUID
   var details: String?
   var processDetails: String?
-  var creationDate: Date?
+  var creationDate: Date
   var processDate: Date?
   var forumPost: GetForumPostShortDTO?
   var user: GetUserPublicDTO
@@ -26,7 +26,7 @@ extension GetForumPostReportDTO {
       id: id,
       details: model.details,
       processDetails: model.processDetails,
-      creationDate: model.creationDate,
+      creationDate: model.creationDate!,
       processDate: model.processDate,
       forumPost: try model.forumPost.map { try GetForumPostShortDTO(from: $0) },
       user: try GetUserPublicDTO(from: model.user),

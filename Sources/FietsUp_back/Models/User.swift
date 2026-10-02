@@ -75,6 +75,7 @@ final class User: Model, Authenticatable, @unchecked Sendable {
       // defaults
     self.adminRights = 0
     self.streak = 0
+    self.streakUpdatedThisWeek = false
     self.totalElapsedDistance = 0
   }
 }

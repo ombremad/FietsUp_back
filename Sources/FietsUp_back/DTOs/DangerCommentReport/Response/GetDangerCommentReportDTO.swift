@@ -11,7 +11,7 @@ struct GetDangerCommentReportDTO: Content {
   var id: UUID
   var details: String?
   var processDetails: String?
-  var creationDate: Date?
+  var creationDate: Date
   var processDate: Date?
   var dangerComment: GetDangerCommentShortDTO?
   var user: GetUserPublicDTO
@@ -26,7 +26,7 @@ extension GetDangerCommentReportDTO {
       id: id,
       details: model.details,
       processDetails: model.processDetails,
-      creationDate: model.creationDate,
+      creationDate: model.creationDate!,
       processDate: model.processDate,
       dangerComment: try model.dangerComment.map { try GetDangerCommentShortDTO(from: $0) },
       user: try GetUserPublicDTO(from: model.user),

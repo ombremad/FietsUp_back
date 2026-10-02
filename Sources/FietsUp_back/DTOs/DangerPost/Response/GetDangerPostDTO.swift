@@ -15,7 +15,7 @@ struct GetDangerPostDTO: Content {
   var latitude: Double
   var longitude: Double
   var user: GetUserPublicDTO
-  var creationDate: Date?
+  var creationDate: Date
   var dangerCategory: GetDangerCategoryDTO
   var likeCount: Int
   var likedByUser: Bool
@@ -34,7 +34,7 @@ extension GetDangerPostDTO {
       latitude: model.latitude,
       longitude: model.longitude,
       user: try GetUserPublicDTO(from: model.user),
-      creationDate: model.creationDate,
+      creationDate: model.creationDate!,
       dangerCategory: try GetDangerCategoryDTO(from: model.dangerCategory),
       likeCount: likeCount,
       likedByUser: likedByUser,

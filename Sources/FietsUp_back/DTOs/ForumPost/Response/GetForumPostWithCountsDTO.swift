@@ -12,7 +12,7 @@ struct GetForumPostWithCountsDTO: Content {
   var title: String
   var content: String
   var user: GetUserPublicDTO
-  var creationDate: Date?
+  var creationDate: Date
   var lastActivityDate: Date
   var totalComments: Int
 }
@@ -26,7 +26,7 @@ extension GetForumPostWithCountsDTO {
       title: model.title,
       content: model.content,
       user: try GetUserPublicDTO(from: model.user),
-      creationDate: model.creationDate,
+      creationDate: model.creationDate!,
       lastActivityDate: model.lastActivityDate!,
       totalComments: totalComments
     )

@@ -22,7 +22,7 @@ struct ForumCategoryController: RouteCollection {
       .grouped(JWTMiddleware(), RequireAdminLevelMiddleware(minimumLevel: 2))
       .groupedOpenAPI(auth: .bearer(id: "AdminBearer", format: "JWT"))
     
-    adminProtected.post("admin", use: self.create)
+    adminProtected.post(use: self.create)
       .openAPI(
         tags: "Admin", "Forum", "Categories",
         summary: "Create",
@@ -57,7 +57,7 @@ struct ForumCategoryController: RouteCollection {
         response: .type(GetForumCategoryWithPostsDTO.self)
       )
         
-    adminProtected.patch("admin", ":forumCategoryID", use: self.patchByID)
+    adminProtected.patch(":forumCategoryID", use: self.patchByID)
       .openAPI(
         tags: "Admin", "Forum", "Categories",
         summary: "Patch",
@@ -67,7 +67,7 @@ struct ForumCategoryController: RouteCollection {
         response: .type(GetForumCategoryShortDTO.self)
       )
     
-    adminProtected.delete("admin", ":forumCategoryID", use: self.deleteByID)
+    adminProtected.delete(":forumCategoryID", use: self.deleteByID)
       .openAPI(
         tags: "Admin", "Forum", "Categories",
         summary: "Delete",

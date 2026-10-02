@@ -12,7 +12,7 @@ struct GetForumCommentShortDTO: Content {
   var id: UUID
   var content: String
   var user: GetUserPublicDTO
-  var creationDate: Date?
+  var creationDate: Date
 }
 
 extension GetForumCommentShortDTO {
@@ -23,7 +23,7 @@ extension GetForumCommentShortDTO {
       id: id,
       content: model.content,
       user: try GetUserPublicDTO(from: model.user),
-      creationDate: model.creationDate
+      creationDate: model.creationDate!
     )
   }
 }

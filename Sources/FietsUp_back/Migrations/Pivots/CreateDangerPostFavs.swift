@@ -1,26 +1,26 @@
 //
-//  CreateDangerComments.swift
+//  CreateDangerPostFavs.swift
 //  FietsUp_back
 //
-//  Created by Anne Ferret on 24/09/2026.
+//  Created by Anne Ferret on 02/10/2026.
 //
 
 import Fluent
 
-struct CreateDangerComments: AsyncMigration {
+struct CreateDangerPostFavs: AsyncMigration {
   func prepare(on database: any Database) async throws {
-    try await database.schema("danger_comments")
+    try await database.schema("danger_post_favs")
       .id()
-      .field("content", .string, .required)
-      .field("creation_date", .datetime, .required)
 
       .field("id_user", .uuid, .required, .references("users", "id", onDelete: .cascade))
       .field("id_danger_post", .uuid, .required, .references("danger_posts", "id", onDelete: .cascade))
+
+      .unique(on: "id_user", "id_danger_post")
 
       .create()
   }
 
   func revert(on database: any Database) async throws {
-    try await database.schema("danger_comments").delete()
+    try await database.schema("danger_post_favs").delete()
   }
 }

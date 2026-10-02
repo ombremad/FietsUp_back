@@ -11,17 +11,17 @@ struct CreateActivities: AsyncMigration {
   func prepare(on database: any Database) async throws {
     try await database.schema("activities")
       .id()
-    
+
       .field("start_date", .datetime, .required)
       .field("end_date", .datetime, .required)
-      .field("length", .int, .required)
-      .field("distance", .int, .required)
-    
-      .field("id_user", .uuid, .required, .references("users", "id"))
+      .field("length", .uint16, .required)
+      .field("distance", .uint32, .required)
+
+      .field("id_user", .uuid, .required, .references("users", "id", onDelete: .cascade))
 
       .create()
   }
-  
+
   func revert(on database: any Database) async throws {
     try await database.schema("activities").delete()
   }
