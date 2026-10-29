@@ -50,12 +50,26 @@ struct DangerPostReportController: RouteCollection {
   
   @Sendable
   func create(req: Request) async throws -> GetDangerPostReportDTO {
+    try CreateReportDTO.validate(content: req)
     let dto = try req.content.decode(CreateReportDTO.self)
     let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
     
     guard try await DangerPost.find(dangerPostID, on: req.db) != nil else {
       throw Abort(.notFound, reason: "DangerPost not found")
+    }
+    
+    guard try await ModerationCategory.find(dto.categoryId, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "ModerationCategory not found")
+    }
+    
+    let existingReport = try await DangerPostReport.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$dangerPost.$id == dangerPostID)
+      .filter(\.$processDate == nil)
+      .first()
+    guard existingReport == nil else {
+      throw Abort(.conflict, reason: "You already reported this")
     }
     
     let report = DangerPostReport(from: dto, userID: userID, dangerPostID: dangerPostID)
@@ -69,8 +83,8 @@ struct DangerPostReportController: RouteCollection {
     let pendingReports = try await DangerPostReport.query(on: req.db)
       .filter(\.$processDate == nil)
       .sort(\.$creationDate, .ascending)
-      .with(\.$dangerPost, { $0.with(\.$user).with(\.$dangerCategory) })
-      .with(\.$user)
+      .with(\.$dangerPost, { $0.with(\.$user) { $0.withCycle() }.with(\.$dangerCategory) })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .all()
     
@@ -100,7 +114,7 @@ struct DangerPostReportController: RouteCollection {
   private func findReport(id: UUID, on db: any Database) async throws -> DangerPostReport {
     let report = try await DangerPostReport.query(on: db)
       .filter(\.$id == id)
-      .with(\.$dangerPost, { $0.with(\.$user).with(\.$dangerCategory) })
+      .with(\.$dangerPost, { $0.with(\.$user) { $0.withCycle() }.with(\.$dangerCategory) })
       .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .first()

@@ -106,16 +106,7 @@ struct DangerPostController: RouteCollection {
     let post = DangerPost(from: dto, userID: userID, dangerCategoryID: dangerCategoryID)
     try await post.save(on: req.db)
     
-    let loadedPost = try await DangerPost.query(on: req.db)
-      .filter(\.$id == post.requireID())
-      .with(\.$user)
-      .with(\.$dangerCategory)
-      .with(\.$dangerComments)
-      .first()
-    
-    guard let loadedPost else {
-      throw Abort(.internalServerError)
-    }
+    let loadedPost = try await findDangerPost(id: post.requireID(), on: req.db)
     
     return try await populateDangerPostDTO(from: loadedPost, userID: userID, on: req.db)
   }
@@ -124,6 +115,8 @@ struct DangerPostController: RouteCollection {
   func like(req: Request) async throws -> GetDangerPostDTO {
     let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
+    
+    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     
     let existingLike = try await DangerPostLike.query(on: req.db)
       .filter(\.$user.$id == userID)
@@ -136,7 +129,6 @@ struct DangerPostController: RouteCollection {
       try await newLike.save(on: req.db)
     }
     
-    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
   }
   
@@ -144,6 +136,8 @@ struct DangerPostController: RouteCollection {
   func fav(req: Request) async throws -> GetDangerPostDTO {
     let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
+    
+    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     
     let existingFav = try await DangerPostFav.query(on: req.db)
       .filter(\.$user.$id == userID)
@@ -156,7 +150,6 @@ struct DangerPostController: RouteCollection {
       try await newFav.save(on: req.db)
     }
     
-    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
   }
   
@@ -164,7 +157,7 @@ struct DangerPostController: RouteCollection {
   func getAll(req: Request) async throws -> [GetDangerPostWithCountsDTO] {
     let posts = try await DangerPost.query(on: req.db)
       .sort(\.$creationDate, .descending)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .with(\.$dangerCategory)
       .all()
     
@@ -212,7 +205,7 @@ struct DangerPostController: RouteCollection {
     
     let posts = try await DangerPost.query(on: req.db)
       .filter(\.$id ~~ orderedIds)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .with(\.$dangerCategory)
       .all()
     

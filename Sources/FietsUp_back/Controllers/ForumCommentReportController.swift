@@ -50,12 +50,26 @@ struct ForumCommentReportController: RouteCollection {
   
   @Sendable
   func create(req: Request) async throws -> GetForumCommentReportDTO {
+    try CreateReportDTO.validate(content: req)
     let dto = try req.content.decode(CreateReportDTO.self)
     let userID = try req.requireUser().requireID()
     let forumCommentID = try req.parameters.require("forumCommentID", as: UUID.self)
     
     guard try await ForumComment.find(forumCommentID, on: req.db) != nil else {
       throw Abort(.notFound, reason: "ForumComment not found")
+    }
+    
+    guard try await ModerationCategory.find(dto.categoryId, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "ModerationCategory not found")
+    }
+    
+    let existingReport = try await ForumCommentReport.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$forumComment.$id == forumCommentID)
+      .filter(\.$processDate == nil)
+      .first()
+    guard existingReport == nil else {
+      throw Abort(.conflict, reason: "You already reported this")
     }
     
     let report = ForumCommentReport(from: dto, userID: userID, forumCommentID: forumCommentID)
@@ -69,8 +83,8 @@ struct ForumCommentReportController: RouteCollection {
     let pendingReports = try await ForumCommentReport.query(on: req.db)
       .filter(\.$processDate == nil)
       .sort(\.$creationDate, .ascending)
-      .with(\.$forumComment, { $0.with(\.$user) })
-      .with(\.$user)
+      .with(\.$forumComment, { $0.with(\.$user) { $0.withCycle() } })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .all()
     
@@ -100,7 +114,7 @@ struct ForumCommentReportController: RouteCollection {
   private func findReport(id: UUID, on db: any Database) async throws -> ForumCommentReport {
     let report = try await ForumCommentReport.query(on: db)
       .filter(\.$id == id)
-      .with(\.$forumComment, { $0.with(\.$user) })
+      .with(\.$forumComment, { $0.with(\.$user) { $0.withCycle() } })
       .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .first()

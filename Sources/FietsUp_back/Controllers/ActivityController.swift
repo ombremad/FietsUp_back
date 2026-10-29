@@ -57,6 +57,10 @@ struct ActivityController: RouteCollection {
     guard dto.endDate <= Date.now else {
       throw Abort(.badRequest, reason: "endDate must not be in the future")
     }
+    // the length column is a SMALLINT of minutes
+    guard dto.endDate.timeIntervalSince(dto.startDate) / 60 <= Double(Int16.max) else {
+      throw Abort(.badRequest, reason: "Activity must not last longer than \(Int16.max) minutes")
+    }
     
     let activity = Activity(from: dto, userID: userID)
     try await activity.save(on: req.db)

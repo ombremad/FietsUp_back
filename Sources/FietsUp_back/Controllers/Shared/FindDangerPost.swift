@@ -19,9 +19,5 @@ func findDangerPost(id: UUID, on db: any Database) async throws -> DangerPost {
     throw Abort(.notFound, reason: "DangerPost not found")
   }
   
-  post.$dangerComments.value = post.$dangerComments.value?
-    .filter { $0.creationDate != nil }
-    .sorted { $0.creationDate! > $1.creationDate! }
-  
   return post
 }

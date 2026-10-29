@@ -47,9 +47,6 @@ struct DangerCategoryController: RouteCollection {
         body: .type(PatchDangerCategoryDTO.self),
         response: .type(GetDangerCategoryDTO.self)
       )
-    
-    let posts = userProtected.grouped(":categoryID", "posts")
-    try DangerPostController().boot(routes: posts)
   }
   
   @Sendable

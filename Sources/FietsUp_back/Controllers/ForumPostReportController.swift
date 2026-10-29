@@ -50,12 +50,26 @@ struct ForumPostReportController: RouteCollection {
   
   @Sendable
   func create(req: Request) async throws -> GetForumPostReportDTO {
+    try CreateReportDTO.validate(content: req)
     let dto = try req.content.decode(CreateReportDTO.self)
     let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
     
     guard try await ForumPost.find(forumPostID, on: req.db) != nil else {
       throw Abort(.notFound, reason: "ForumPost not found")
+    }
+    
+    guard try await ModerationCategory.find(dto.categoryId, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "ModerationCategory not found")
+    }
+    
+    let existingReport = try await ForumPostReport.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$forumPost.$id == forumPostID)
+      .filter(\.$processDate == nil)
+      .first()
+    guard existingReport == nil else {
+      throw Abort(.conflict, reason: "You already reported this")
     }
     
     let report = ForumPostReport(from: dto, userID: userID, forumPostID: forumPostID)
@@ -69,8 +83,8 @@ struct ForumPostReportController: RouteCollection {
     let pendingReports = try await ForumPostReport.query(on: req.db)
       .filter(\.$processDate == nil)
       .sort(\.$creationDate, .ascending)
-      .with(\.$forumPost, { $0.with(\.$user) })
-      .with(\.$user)
+      .with(\.$forumPost, { $0.with(\.$user) { $0.withCycle() } })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .all()
     
@@ -100,7 +114,7 @@ struct ForumPostReportController: RouteCollection {
   private func findReport(id: UUID, on db: any Database) async throws -> ForumPostReport {
     let report = try await ForumPostReport.query(on: db)
       .filter(\.$id == id)
-      .with(\.$forumPost, { $0.with(\.$user) })
+      .with(\.$forumPost, { $0.with(\.$user) { $0.withCycle() } })
       .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .first()

@@ -93,16 +93,7 @@ struct ForumPostController: RouteCollection {
     let post = ForumPost(from: dto, userID: userID, forumCategoryID: forumCategoryID)
     try await post.save(on: req.db)
     
-    let loadedPost = try await ForumPost.query(on: req.db)
-      .filter(\.$id == post.requireID())
-      .with(\.$user)
-      .with(\.$forumCategory)
-      .with(\.$forumComments)
-      .first()
-    
-    guard let loadedPost else {
-      throw Abort(.internalServerError)
-    }
+    let loadedPost = try await findForumPost(id: post.requireID(), on: req.db)
     
     return try await populateForumPostDTO(from: loadedPost, userID: userID, req: req)
   }
@@ -112,6 +103,8 @@ struct ForumPostController: RouteCollection {
     try QueryPageDTO.validate(query: req)
     let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
+    
+    let forumPost = try await findForumPost(id: forumPostID, on: req.db)
     
     let existingLike = try await ForumPostLike.query(on: req.db)
       .filter(\.$user.$id == userID)
@@ -124,7 +117,6 @@ struct ForumPostController: RouteCollection {
       try await newLike.save(on: req.db)
     }
     
-    let forumPost = try await findForumPost(id: forumPostID, on: req.db)
     return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
   
@@ -134,6 +126,8 @@ struct ForumPostController: RouteCollection {
     let userID = try req.requireUser().requireID()
     let forumPostID = try req.parameters.require("forumPostID", as: UUID.self)
         
+    let forumPost = try await findForumPost(id: forumPostID, on: req.db)
+    
     let existingFav = try await ForumPostFav.query(on: req.db)
       .filter(\.$user.$id == userID)
       .filter(\.$forumPost.$id == forumPostID)
@@ -145,7 +139,6 @@ struct ForumPostController: RouteCollection {
       try await newFav.save(on: req.db)
     }
     
-    let forumPost = try await findForumPost(id: forumPostID, on: req.db)
     return try await populateForumPostDTO(from: forumPost, userID: userID, req: req)
   }
     

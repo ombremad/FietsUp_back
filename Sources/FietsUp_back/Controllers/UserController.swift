@@ -212,6 +212,10 @@ struct UserController: RouteCollection {
     try PatchUserDTO.validate(content: req)
     let dto = try req.content.decode(PatchUserDTO.self)
     
+    try await requireOwned(dto.cycleTypeId, in: user.$cycleTypeOwned, on: req.db)
+    try await requireOwned(dto.cycleColorId, in: user.$cycleColorsOwned, on: req.db)
+    try await requireOwned(dto.cycleDecorationId, in: user.$cycleDecorationsOwned, on: req.db)
+    
     user.patch(with: dto)
     try await user.save(on: req.db)
     
@@ -247,6 +251,9 @@ struct UserController: RouteCollection {
     let user = try await findUser(id: userID, on: req.db)
     
     let dto = try req.content.decode(BanUserDTO.self)
+    guard dto.banEndDate > Date.now else {
+      throw Abort(.badRequest, reason: "banEndDate must be in the future")
+    }
     user.ban(until: dto.banEndDate)
     try await user.save(on: req.db)
     
@@ -264,6 +271,18 @@ struct UserController: RouteCollection {
     
     let updated = try await findUserWithCycle(id: user.requireID(), on: req.db)
     return try GetUserDTO(from: updated)
+  }
+
+  private func requireOwned<Item, Pivot>(
+    _ id: UUID?, in owned: SiblingsProperty<User, Item, Pivot>, on db: any Database
+  ) async throws where Item: Model, Item.IDValue == UUID, Pivot: Model {
+    guard let id else { return }
+    guard try await Item.find(id, on: db) != nil else {
+      throw Abort(.notFound, reason: "\(Item.self) not found")
+    }
+    guard try await owned.isAttached(toID: id, on: db) else {
+      throw Abort(.forbidden, reason: "\(Item.self) not owned")
+    }
   }
 
   private func findUser(id: UUID, on db: any Database) async throws -> User {
