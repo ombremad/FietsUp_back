@@ -12,9 +12,9 @@ struct CreateDangerCategories: AsyncMigration {
     try await database.schema("danger_categories")
       .id()
 
-      .field("name", .string, .required)
-      .field("icon_name", .string, .required)
-      .field("last_activity_date", .datetime, .required)
+      .field("name", .sql(unsafeRaw: "VARCHAR(50)"), .required)
+      .field("icon_name", .sql(unsafeRaw: "VARCHAR(100)"), .required)
+      .field("last_activity_date", .sql(unsafeRaw: "TIMESTAMP"), .required, .sql(unsafeRaw: "DEFAULT CURRENT_TIMESTAMP"))
 
       .unique(on: "name")
 

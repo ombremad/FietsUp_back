@@ -50,7 +50,10 @@ public func configure(_ app: Application) async throws {
   ContentConfiguration.global.use(decoder: decoder, for: .json)
   
   // Migrations
-  
+
+  // Configuration
+  app.migrations.add(ConfigureTimeZone())
+
   // Tables
   app.migrations.add(CreateCycleColors())
   app.migrations.add(CreateCycleDecorations())
@@ -96,6 +99,9 @@ public func configure(_ app: Application) async throws {
 
   // Run migrations (uncomment to run)
   // try await app.autoMigrate()
+  
+  // Revert migrations (uncomment to run)
+  // try await app.autoRevert()
   
   // Routes
   try routes(app)

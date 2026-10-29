@@ -6,15 +6,15 @@
 //
 
 import Fluent
-import SQLKit
+import FluentMySQLDriver
 
 struct CreateWeeklyStreakReset: AsyncMigration {
   func prepare(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
+    guard let mysql = database as? any MySQLDatabase else { return }
 
-    try await sql.raw("SET GLOBAL event_scheduler = ON").run()
+    try await mysql.execute("SET GLOBAL event_scheduler = ON")
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE PROCEDURE reset_streaks()
     BEGIN
     UPDATE users u
@@ -31,9 +31,9 @@ struct CreateWeeklyStreakReset: AsyncMigration {
         END,
         u.streak_updated_this_week = 0;
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE EVENT weekly_streak_update
     ON SCHEDULE EVERY 7 DAY
     STARTS (
@@ -43,12 +43,12 @@ struct CreateWeeklyStreakReset: AsyncMigration {
       ), '00:01:00')
     )
     DO CALL reset_streaks()
-    """).run()
+    """)
   }
 
   func revert(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
-    try await sql.raw("DROP EVENT IF EXISTS weekly_streak_update").run()
-    try await sql.raw("DROP PROCEDURE IF EXISTS reset_streaks").run()
+    guard let mysql = database as? any MySQLDatabase else { return }
+    try await mysql.execute("DROP EVENT IF EXISTS weekly_streak_update")
+    try await mysql.execute("DROP PROCEDURE IF EXISTS reset_streaks")
   }
 }

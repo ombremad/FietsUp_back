@@ -13,12 +13,12 @@ struct CreateDangerPosts: AsyncMigration {
     let builder = database.schema("danger_posts")
       .id()
 
-      .field("title", .string, .required)
-      .field("content", .string, .required)
-      .field("creation_date", .datetime, .required)
-      .field("latitude", .double, .required)
-      .field("longitude", .double, .required)
-      .field("last_activity_date", .datetime, .required)
+      .field("title", .sql(unsafeRaw: "VARCHAR(100)"), .required)
+      .field("content", .sql(unsafeRaw: "TEXT"), .required)
+      .field("creation_date", .sql(unsafeRaw: "TIMESTAMP"), .required, .sql(unsafeRaw: "DEFAULT CURRENT_TIMESTAMP"))
+      .field("latitude", .sql(unsafeRaw: "DECIMAL(8,6)"), .required)
+      .field("longitude", .sql(unsafeRaw: "DECIMAL(9,6)"), .required)
+      .field("last_activity_date", .sql(unsafeRaw: "TIMESTAMP"), .required, .sql(unsafeRaw: "DEFAULT CURRENT_TIMESTAMP"))
 
       .field("id_user", .uuid, .required, .references("users", "id", onDelete: .cascade))
       .field("id_danger_category", .uuid, .required, .references("danger_categories", "id", onDelete: .cascade))

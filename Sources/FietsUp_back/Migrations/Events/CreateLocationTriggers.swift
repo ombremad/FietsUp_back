@@ -6,13 +6,13 @@
 //
 
 import Fluent
-import SQLKit
+import FluentMySQLDriver
 
 struct CreateLocationTriggers: AsyncMigration {
   func prepare(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
+    guard let mysql = database as? any MySQLDatabase else { return }
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER places_location_insert
     BEFORE INSERT ON places
     FOR EACH ROW
@@ -21,9 +21,9 @@ struct CreateLocationTriggers: AsyncMigration {
         CONCAT('POINT(', NEW.longitude, ' ', NEW.latitude, ')'), 4326
       );
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER places_location_update
     BEFORE UPDATE ON places
     FOR EACH ROW
@@ -34,9 +34,9 @@ struct CreateLocationTriggers: AsyncMigration {
         );
       END IF;
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER danger_posts_location_insert
     BEFORE INSERT ON danger_posts
     FOR EACH ROW
@@ -45,9 +45,9 @@ struct CreateLocationTriggers: AsyncMigration {
         CONCAT('POINT(', NEW.longitude, ' ', NEW.latitude, ')'), 4326
       );
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER danger_posts_location_update
     BEFORE UPDATE ON danger_posts
     FOR EACH ROW
@@ -58,14 +58,14 @@ struct CreateLocationTriggers: AsyncMigration {
         );
       END IF;
     END
-    """).run()
+    """)
   }
 
   func revert(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
-    try await sql.raw("DROP TRIGGER IF EXISTS places_location_insert").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS places_location_update").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS danger_posts_location_insert").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS danger_posts_location_update").run()
+    guard let mysql = database as? any MySQLDatabase else { return }
+    try await mysql.execute("DROP TRIGGER IF EXISTS places_location_insert")
+    try await mysql.execute("DROP TRIGGER IF EXISTS places_location_update")
+    try await mysql.execute("DROP TRIGGER IF EXISTS danger_posts_location_insert")
+    try await mysql.execute("DROP TRIGGER IF EXISTS danger_posts_location_update")
   }
 }

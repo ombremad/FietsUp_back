@@ -12,10 +12,10 @@ struct CreateActivities: AsyncMigration {
     try await database.schema("activities")
       .id()
 
-      .field("start_date", .datetime, .required)
-      .field("end_date", .datetime, .required)
-      .field("length", .uint16, .required)
-      .field("distance", .uint32, .required)
+      .field("start_date", .sql(unsafeRaw: "TIMESTAMP"), .required)
+      .field("end_date", .sql(unsafeRaw: "TIMESTAMP"), .required)
+      .field("length", .sql(unsafeRaw: "SMALLINT"), .required)
+      .field("distance", .sql(unsafeRaw: "INT"), .required)
 
       .field("id_user", .uuid, .required, .references("users", "id", onDelete: .cascade))
 

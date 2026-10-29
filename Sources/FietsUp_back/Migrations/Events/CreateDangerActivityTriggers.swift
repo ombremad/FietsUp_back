@@ -6,13 +6,13 @@
 //
 
 import Fluent
-import SQLKit
+import FluentMySQLDriver
 
 struct CreateDangerActivityTriggers: AsyncMigration {
   func prepare(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
+    guard let mysql = database as? any MySQLDatabase else { return }
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER update_last_activity_on_new_danger_post
     AFTER INSERT ON danger_posts
     FOR EACH ROW
@@ -21,9 +21,9 @@ struct CreateDangerActivityTriggers: AsyncMigration {
         SET last_activity_date = NEW.creation_date
         WHERE id = NEW.id_danger_category;
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER update_last_activity_on_new_danger_comment
     AFTER INSERT ON danger_comments
     FOR EACH ROW
@@ -32,9 +32,9 @@ struct CreateDangerActivityTriggers: AsyncMigration {
         SET last_activity_date = NEW.creation_date
         WHERE id = NEW.id_danger_post;
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER cascade_last_activity_on_danger_post_update
     AFTER UPDATE ON danger_posts
     FOR EACH ROW
@@ -45,13 +45,13 @@ struct CreateDangerActivityTriggers: AsyncMigration {
             WHERE id = NEW.id_danger_category;
         END IF;
     END
-    """).run()
+    """)
   }
 
   func revert(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
-    try await sql.raw("DROP TRIGGER IF EXISTS update_last_activity_on_new_danger_post").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS update_last_activity_on_new_danger_comment").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS cascade_last_activity_on_danger_post_update").run()
+    guard let mysql = database as? any MySQLDatabase else { return }
+    try await mysql.execute("DROP TRIGGER IF EXISTS update_last_activity_on_new_danger_post")
+    try await mysql.execute("DROP TRIGGER IF EXISTS update_last_activity_on_new_danger_comment")
+    try await mysql.execute("DROP TRIGGER IF EXISTS cascade_last_activity_on_danger_post_update")
   }
 }

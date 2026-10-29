@@ -12,8 +12,8 @@ struct CreatePlaceCategories: AsyncMigration {
     try await database.schema("place_categories")
       .id()
 
-      .field("name", .string, .required)
-      .field("icon_name", .string, .required)
+      .field("name", .sql(unsafeRaw: "VARCHAR(50)"), .required)
+      .field("icon_name", .sql(unsafeRaw: "VARCHAR(100)"), .required)
 
       .unique(on: "name")
 

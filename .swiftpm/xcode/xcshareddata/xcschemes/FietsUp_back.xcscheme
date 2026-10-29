@@ -86,7 +86,7 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "DATABASE_NAME"
-            value = "fiets_up_migrations"
+            value = "fiets_up"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

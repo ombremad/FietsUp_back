@@ -12,10 +12,10 @@ struct CreateDangerCommentReports: AsyncMigration {
     try await database.schema("danger_comment_reports")
       .id()
 
-      .field("details", .string)
-      .field("process_details", .string)
-      .field("creation_date", .datetime, .required)
-      .field("process_date", .datetime)
+      .field("details", .sql(unsafeRaw: "TEXT"))
+      .field("process_details", .sql(unsafeRaw: "TEXT"))
+      .field("creation_date", .sql(unsafeRaw: "TIMESTAMP"), .required, .sql(unsafeRaw: "DEFAULT CURRENT_TIMESTAMP"))
+      .field("process_date", .sql(unsafeRaw: "TIMESTAMP NULL"))
 
       .field("id_danger_comment", .uuid, .references("danger_comments", "id", onDelete: .setNull))
       .field("id_user", .uuid, .required, .references("users", "id", onDelete: .cascade))

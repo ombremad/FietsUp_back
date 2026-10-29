@@ -12,7 +12,7 @@ struct CreateRatings: AsyncMigration {
     try await database.schema("ratings")
       .id()
 
-      .field("note", .uint8, .required)
+      .field("note", .sql(unsafeRaw: "TINYINT"), .required)
 
       .field("id_user", .uuid, .required, .references("users", "id", onDelete: .cascade))
       .field("id_place", .uuid, .required, .references("places", "id", onDelete: .cascade))

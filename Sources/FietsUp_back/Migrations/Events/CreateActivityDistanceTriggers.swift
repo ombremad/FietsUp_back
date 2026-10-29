@@ -6,12 +6,12 @@
 //
 
 import Fluent
-import SQLKit
+import FluentMySQLDriver
 
 struct CreateActivityDistanceTriggers: AsyncMigration {
   func prepare(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
-    try await sql.raw("""
+    guard let mysql = database as? any MySQLDatabase else { return }
+    try await mysql.execute("""
     CREATE TRIGGER update_total_elapsed_distance_on_new_activity
     AFTER INSERT ON activities
     FOR EACH ROW
@@ -20,9 +20,9 @@ struct CreateActivityDistanceTriggers: AsyncMigration {
         SET total_elapsed_distance = total_elapsed_distance + NEW.distance
         WHERE id = NEW.id_user;
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER update_total_elapsed_distance_on_delete_activity
     AFTER DELETE ON activities
     FOR EACH ROW
@@ -31,12 +31,12 @@ struct CreateActivityDistanceTriggers: AsyncMigration {
         SET total_elapsed_distance = total_elapsed_distance - OLD.distance
         WHERE id = OLD.id_user;
     END
-    """).run()
+    """)
   }
 
   func revert(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
-    try await sql.raw("DROP TRIGGER IF EXISTS update_total_elapsed_distance_on_new_activity").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS update_total_elapsed_distance_on_delete_activity").run()
+    guard let mysql = database as? any MySQLDatabase else { return }
+    try await mysql.execute("DROP TRIGGER IF EXISTS update_total_elapsed_distance_on_new_activity")
+    try await mysql.execute("DROP TRIGGER IF EXISTS update_total_elapsed_distance_on_delete_activity")
   }
 }

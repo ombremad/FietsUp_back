@@ -12,8 +12,8 @@ struct CreateCycleDecorations: AsyncMigration {
     try await database.schema("cycle_decorations")
       .id()
     
-      .field("name", .string, .required)
-      .field("file_link", .string, .required)
+      .field("name", .sql(unsafeRaw: "VARCHAR(50)"), .required)
+      .field("file_link", .sql(unsafeRaw: "VARCHAR(100)"), .required)
     
       .unique(on: "name")
     
