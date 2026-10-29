@@ -29,15 +29,6 @@ struct PlaceCategoryController: RouteCollection {
         response: .type([GetPlaceCategoryDTO].self)
       )
     
-    adminProtected.get("admin", use: self.getAll)
-      .openAPI(
-        tags: "Places", "Categories",
-        summary: "List",
-        description: "Get all place categories",
-        query: .type(QueryPageDTO.self),
-        response: .type(Page<GetPlaceCategoryDTO>.self)
-      )
-    
     adminProtected.post(use: self.create)
       .openAPI(
         tags: "Places", "Categories",
@@ -85,16 +76,6 @@ struct PlaceCategoryController: RouteCollection {
       .map { category in try GetPlaceCategoryDTO(from: category) }
   }
   
-  @Sendable
-  func getAll(req: Request) async throws -> Page<GetPlaceCategoryDTO> {
-    try QueryPageDTO.validate(query: req)
-
-    return try await PlaceCategory.query(on: req.db)
-      .sort(\.$name)
-      .paginate(for: req)
-      .map { category in try GetPlaceCategoryDTO(from: category) }
-  }
-
   @Sendable
   func patchByID(req: Request) async throws -> GetPlaceCategoryDTO {
     let id = try req.parameters.require("placeCategoryID", as: UUID.self)

@@ -29,15 +29,6 @@ struct DangerCategoryController: RouteCollection {
         response: .type([GetDangerCategoryDTO].self)
       )
     
-    adminProtected.get("admin", use: self.getAll)
-      .openAPI(
-        tags: "Dangers", "Categories",
-        summary: "List",
-        description: "List of all danger categories",
-        query: .type(QueryPageDTO.self),
-        response: .type(Page<GetDangerCategoryDTO>.self)
-      )
-
     adminProtected.post(use: self.create)
       .openAPI(
         tags: "Dangers", "Categories",
@@ -76,16 +67,6 @@ struct DangerCategoryController: RouteCollection {
     try await DangerCategory.query(on: req.db)
       .sort(\.$name)
       .all()
-      .map { category in try GetDangerCategoryDTO(from: category) }
-  }
-  
-  @Sendable
-  func getAll(req: Request) async throws -> Page<GetDangerCategoryDTO> {
-    try QueryPageDTO.validate(query: req)
-    
-    return try await DangerCategory.query(on: req.db)
-      .sort(\.$name)
-      .paginate(for: req)
       .map { category in try GetDangerCategoryDTO(from: category) }
   }
   

@@ -31,15 +31,6 @@ struct ForumCategoryController: RouteCollection {
         response: .type(GetForumCategoryShortDTO.self)
       )
     
-    adminProtected.get("admin", use: self.getAll)
-      .openAPI(
-        tags: "Forum", "Categories",
-        summary: "List",
-        description: "List forum categories",
-        query: .type(QueryPageDTO.self),
-        response: .type(Page<GetForumCategoryWithCountsDTO>.self)
-      )
-    
     userProtected.get(use: self.getIndex)
       .openAPI(
         tags: "Forum", "Categories",
@@ -86,22 +77,7 @@ struct ForumCategoryController: RouteCollection {
     try await forumCategory.save(on: req.db)
     return try GetForumCategoryShortDTO(from: forumCategory)
   }
-  
-  @Sendable
-  func getAll(req: Request) async throws -> Page<GetForumCategoryWithCountsDTO> {
-    try QueryPageDTO.validate(query: req)
-
-    let page = try await ForumCategory.query(on: req.db)
-      .sort(\.$name)
-      .paginate(for: req)
-
-    let countsByCategoryID = try await postCounts(for: page.items, on: req.db)
     
-    return try page.map { category in
-      try GetForumCategoryWithCountsDTO(from: category, totalPosts: countsByCategoryID[category.requireID()] ?? 0)
-    }
-  }
-  
   @Sendable
   func getIndex(req: Request) async throws -> [GetForumCategoryWithCountsDTO] {
     let categories = try await ForumCategory.query(on: req.db)
