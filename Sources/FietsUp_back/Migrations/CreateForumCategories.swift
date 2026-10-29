@@ -12,9 +12,9 @@ struct CreateForumCategories: AsyncMigration {
     try await database.schema("forum_categories")
       .id()
 
-      .field("name", .string, .required)
-      .field("details", .string)
-      .field("last_activity_date", .datetime, .required)
+      .field("name", .sql(unsafeRaw: "VARCHAR(50)"), .required)
+      .field("details", .sql(unsafeRaw: "TEXT"))
+      .field("last_activity_date", .sql(unsafeRaw: "TIMESTAMP"), .required, .sql(unsafeRaw: "DEFAULT CURRENT_TIMESTAMP"))
 
       .unique(on: "name")
 

@@ -12,7 +12,7 @@ struct CreateModerationCategories: AsyncMigration {
     try await database.schema("moderation_categories")
       .id()
 
-      .field("name", .string, .required)
+      .field("name", .sql(unsafeRaw: "VARCHAR(100)"), .required)
 
       .unique(on: "name")
 

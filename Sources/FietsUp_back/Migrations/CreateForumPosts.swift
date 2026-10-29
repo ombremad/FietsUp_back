@@ -12,10 +12,10 @@ struct CreateForumPosts: AsyncMigration {
     try await database.schema("forum_posts")
       .id()
 
-      .field("title", .string, .required)
-      .field("content", .string, .required)
-      .field("creation_date", .datetime, .required)
-      .field("last_activity_date", .datetime, .required)
+      .field("title", .sql(unsafeRaw: "VARCHAR(100)"), .required)
+      .field("content", .sql(unsafeRaw: "TEXT"), .required)
+      .field("creation_date", .sql(unsafeRaw: "TIMESTAMP"), .required, .sql(unsafeRaw: "DEFAULT CURRENT_TIMESTAMP"))
+      .field("last_activity_date", .sql(unsafeRaw: "TIMESTAMP"), .required, .sql(unsafeRaw: "DEFAULT CURRENT_TIMESTAMP"))
 
       .field("id_user", .uuid, .required, .references("users", "id", onDelete: .cascade))
       .field("id_forum_category", .uuid, .required, .references("forum_categories", "id", onDelete: .cascade))

@@ -12,8 +12,8 @@ struct CreateCycleColors: AsyncMigration {
     try await database.schema("cycle_colors")
       .id()
     
-      .field("name", .string, .required)
-      .field("color", .string, .required)
+      .field("name", .sql(unsafeRaw: "VARCHAR(50)"), .required)
+      .field("color", .sql(unsafeRaw: "VARCHAR(6)"), .required)
     
       .unique(on: "name")
     

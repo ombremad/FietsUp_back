@@ -6,13 +6,13 @@
 //
 
 import Fluent
-import SQLKit
+import FluentMySQLDriver
 
 struct CreateForumActivityTriggers: AsyncMigration {
   func prepare(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
+    guard let mysql = database as? any MySQLDatabase else { return }
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER update_last_activity_on_new_forum_post
     AFTER INSERT ON forum_posts
     FOR EACH ROW
@@ -21,9 +21,9 @@ struct CreateForumActivityTriggers: AsyncMigration {
         SET last_activity_date = NEW.creation_date
         WHERE id = NEW.id_forum_category;
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER update_last_activity_on_new_forum_comment
     AFTER INSERT ON forum_comments
     FOR EACH ROW
@@ -32,9 +32,9 @@ struct CreateForumActivityTriggers: AsyncMigration {
         SET last_activity_date = NEW.creation_date
         WHERE id = NEW.id_forum_post;
     END
-    """).run()
+    """)
 
-    try await sql.raw("""
+    try await mysql.execute("""
     CREATE TRIGGER cascade_last_activity_on_forum_post_update
     AFTER UPDATE ON forum_posts
     FOR EACH ROW
@@ -45,13 +45,13 @@ struct CreateForumActivityTriggers: AsyncMigration {
             WHERE id = NEW.id_forum_category;
         END IF;
     END
-    """).run()
+    """)
   }
 
   func revert(on database: any Database) async throws {
-    guard let sql = database as? any SQLDatabase else { return }
-    try await sql.raw("DROP TRIGGER IF EXISTS update_last_activity_on_new_forum_post").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS update_last_activity_on_new_forum_comment").run()
-    try await sql.raw("DROP TRIGGER IF EXISTS cascade_last_activity_on_forum_post_update").run()
+    guard let mysql = database as? any MySQLDatabase else { return }
+    try await mysql.execute("DROP TRIGGER IF EXISTS update_last_activity_on_new_forum_post")
+    try await mysql.execute("DROP TRIGGER IF EXISTS update_last_activity_on_new_forum_comment")
+    try await mysql.execute("DROP TRIGGER IF EXISTS cascade_last_activity_on_forum_post_update")
   }
 }
