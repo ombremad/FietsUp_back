@@ -31,23 +31,23 @@ struct DashboardController: RouteCollection {
     let user = try req.requireUser()
     
     async let forumPostFavs = try await user.$forumPostFavs.query(on: req.db)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .sort(\.$creationDate, .descending)
       .all()
     
     async let forumCommentFavs = try await user.$forumCommentFavs.query(on: req.db)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .sort(\.$creationDate, .descending)
       .all()
     
     async let dangerPostFavs = try await user.$dangerPostFavs.query(on: req.db)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .with(\.$dangerCategory)
       .sort(\.$creationDate, .descending)
       .all()
     
     async let dangerCommentFavs = try await user.$dangerCommentFavs.query(on: req.db)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .sort(\.$creationDate, .descending)
       .all()
     

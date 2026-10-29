@@ -359,7 +359,7 @@ extension DatabaseTests {
 
     // MARK: - GET /dangers/posts/:id
 
-    @Test("Getting a danger post lists its comments newest first")
+    @Test("Getting a danger post lists its comments oldest first")
     func getByID() async throws {
       try await withAppIncludingDB { app in
         let user = try await makeUser(on: app.db)
@@ -376,7 +376,7 @@ extension DatabaseTests {
           },
           afterResponse: { res async throws in
             #expect(res.status == .ok)
-            #expect(try res.content.decode(GetDangerPostDTO.self).comments.map(\.content) == ["Newer", "Older"])
+            #expect(try res.content.decode(GetDangerPostDTO.self).comments.map(\.content) == ["Older", "Newer"])
           })
       }
     }

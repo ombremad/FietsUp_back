@@ -29,32 +29,32 @@ struct ReportController: RouteCollection {
   func pending(req: Request) async throws -> GetAllReportsDTO {
     async let forumPostReports = try await ForumPostReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .with(\.$forumPost, { $0.with(\.$user) })
-      .with(\.$user)
+      .with(\.$forumPost, { $0.with(\.$user) { $0.withCycle() } })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .sort(\.$creationDate, .ascending)
       .all()
     
     async let forumCommentReports = try await ForumCommentReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .with(\.$forumComment, { $0.with(\.$user) })
-      .with(\.$user)
+      .with(\.$forumComment, { $0.with(\.$user) { $0.withCycle() } })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .sort(\.$creationDate, .ascending)
       .all()
     
    async let dangerPostReports = try await DangerPostReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .with(\.$dangerPost, { $0.with(\.$user).with(\.$dangerCategory) })
-      .with(\.$user)
+      .with(\.$dangerPost, { $0.with(\.$user) { $0.withCycle() }.with(\.$dangerCategory) })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .sort(\.$creationDate, .ascending)
       .all()
     
     async let dangerCommentReports = try await DangerCommentReport.query(on: req.db)
       .filter(\.$processDate == nil)
-      .with(\.$dangerComment, { $0.with(\.$user) })
-      .with(\.$user)
+      .with(\.$dangerComment, { $0.with(\.$user) { $0.withCycle() } })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .sort(\.$creationDate, .ascending)
       .all()

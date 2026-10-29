@@ -101,7 +101,7 @@ struct ForumCategoryController: RouteCollection {
     let postsPage = try await ForumPost.query(on: req.db)
       .filter(\.$forumCategory.$id == categoryID)
       .sort(\.$lastActivityDate, .descending)
-      .with(\.$user)
+      .with(\.$user) { $0.withCycle() }
       .paginate(for: req)
     
     let commentCounts = try await countForumComments(for: postsPage.items, on: req.db)

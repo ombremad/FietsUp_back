@@ -58,6 +58,19 @@ struct ForumCommentReportController: RouteCollection {
       throw Abort(.notFound, reason: "ForumComment not found")
     }
     
+    guard try await ModerationCategory.find(dto.categoryId, on: req.db) != nil else {
+      throw Abort(.notFound, reason: "ModerationCategory not found")
+    }
+    
+    let existingReport = try await ForumCommentReport.query(on: req.db)
+      .filter(\.$user.$id == userID)
+      .filter(\.$forumComment.$id == forumCommentID)
+      .filter(\.$processDate == nil)
+      .first()
+    guard existingReport == nil else {
+      throw Abort(.conflict, reason: "You already reported this")
+    }
+    
     let report = ForumCommentReport(from: dto, userID: userID, forumCommentID: forumCommentID)
     try await report.save(on: req.db)
     
@@ -69,8 +82,8 @@ struct ForumCommentReportController: RouteCollection {
     let pendingReports = try await ForumCommentReport.query(on: req.db)
       .filter(\.$processDate == nil)
       .sort(\.$creationDate, .ascending)
-      .with(\.$forumComment, { $0.with(\.$user) })
-      .with(\.$user)
+      .with(\.$forumComment, { $0.with(\.$user) { $0.withCycle() } })
+      .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .all()
     
@@ -100,7 +113,7 @@ struct ForumCommentReportController: RouteCollection {
   private func findReport(id: UUID, on db: any Database) async throws -> ForumCommentReport {
     let report = try await ForumCommentReport.query(on: db)
       .filter(\.$id == id)
-      .with(\.$forumComment, { $0.with(\.$user) })
+      .with(\.$forumComment, { $0.with(\.$user) { $0.withCycle() } })
       .with(\.$user) { $0.withCycle() }
       .with(\.$moderationCategory)
       .first()

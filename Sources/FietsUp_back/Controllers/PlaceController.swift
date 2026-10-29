@@ -92,13 +92,11 @@ struct PlaceController: RouteCollection {
   func create(req: Request) async throws -> GetPlaceWithRatingDTO {
     try CreatePlaceDTO.validate(content: req)
     let dto = try req.content.decode(CreatePlaceDTO.self)
+    let categories = try await findCategories(ids: dto.categoriesIds, on: req.db)
     
     let place = Place(from: dto)
     try await place.save(on: req.db)
     
-    let categories = try await PlaceCategory.query(on: req.db)
-      .filter(\.$id ~~ dto.categoriesIds)
-      .all()
     try await place.$categories.attach(categories, on: req.db)
     try await place.$categories.load(on: req.db)
     try await place.$ratings.load(on: req.db)
@@ -118,9 +116,7 @@ struct PlaceController: RouteCollection {
     }
     
     let allCategoryIds = Set(dtos.flatMap { $0.categoriesIds })
-    let allCategories = try await PlaceCategory.query(on: req.db)
-      .filter(\.$id ~~ Array(allCategoryIds))
-      .all()
+    let allCategories = try await findCategories(ids: Array(allCategoryIds), on: req.db)
     let categoriesById = Dictionary(uniqueKeysWithValues: allCategories.map { ($0.id!, $0) })
     
     return try await req.db.transaction { db in
@@ -248,13 +244,15 @@ struct PlaceController: RouteCollection {
     
     try PatchPlaceDTO.validate(content: req)
     let dto = try req.content.decode(PatchPlaceDTO.self)
+    var categories: [PlaceCategory]?
+    if let categoriesIds = dto.categoriesIds {
+      categories = try await findCategories(ids: categoriesIds, on: req.db)
+    }
+
     place.patch(with: dto)
     try await place.save(on: req.db)
     
-    if let categoriesIds = dto.categoriesIds {
-      let categories = try await PlaceCategory.query(on: req.db)
-        .filter(\.$id ~~ categoriesIds)
-        .all()
+    if let categories {
       try await place.$categories.detachAll(on: req.db)
       try await place.$categories.attach(categories, on: req.db)
     }
@@ -271,6 +269,19 @@ struct PlaceController: RouteCollection {
     
     try await place.delete(on: req.db)
     return .noContent
+  }
+  
+  private func findCategories(ids: [UUID], on db: any Database) async throws -> [PlaceCategory] {
+    let requestedIDs = Set(ids)
+    let categories = try await PlaceCategory.query(on: db)
+      .filter(\.$id ~~ Array(requestedIDs))
+      .all()
+    let missingIDs = requestedIDs.subtracting(categories.compactMap(\.id))
+    guard missingIDs.isEmpty else {
+      let list = missingIDs.map(\.uuidString).sorted().joined(separator: ", ")
+      throw Abort(.notFound, reason: "PlaceCategory not found: \(list)")
+    }
+    return categories
   }
   
   private func find(id: UUID, on db: any Database) async throws -> Place {

@@ -71,11 +71,12 @@ struct DangerCommentController: RouteCollection {
     
     let userID = try req.requireUser().requireID()
     let dangerPostID = try req.parameters.require("dangerPostID", as: UUID.self)
-    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
+    _ = try await findDangerPost(id: dangerPostID, on: req.db)
     
     let comment = DangerComment(from: dto, userID: userID, dangerPostID: dangerPostID)
     try await comment.save(on: req.db)
     
+    let dangerPost = try await findDangerPost(id: dangerPostID, on: req.db)
     return try await populateDangerPostDTO(from: dangerPost, userID: userID, on: req.db)
   }
   

@@ -27,7 +27,11 @@ public func configure(_ app: Application) async throws {
         ?? (app.environment == .testing ? "fiets_up_tests" : "vapor_database"),
       tlsConfiguration: tls
     ), as: .mysql)
+  app.lifecycle.use(TimeZoneCheck())
   
+  // Database errors
+  app.middleware.use(DatabaseErrorMiddleware())
+
   // Cors
   let corsConfiguration = CORSMiddleware.Configuration(
     allowedOrigin: .none,
