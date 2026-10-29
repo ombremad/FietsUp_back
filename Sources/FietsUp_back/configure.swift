@@ -23,7 +23,8 @@ public func configure(_ app: Application) async throws {
       ?? MySQLConfiguration.ianaPortNumber,
       username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
       password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
-      database: Environment.get("DATABASE_NAME") ?? "vapor_database",
+      database: Environment.get("DATABASE_NAME")
+        ?? (app.environment == .testing ? "fiets_up_tests" : "vapor_database"),
       tlsConfiguration: tls
     ), as: .mysql)
   
@@ -36,9 +37,11 @@ public func configure(_ app: Application) async throws {
   app.middleware.use(CORSMiddleware(configuration: corsConfiguration))
 
   // Gatekeeper
-  app.gatekeeper.config = .init(maxRequests: 100, per: .minute)
-  app.gatekeeper.config = .init(maxRequests: 20, per: .second)
-  app.middleware.use(GatekeeperMiddleware())
+  if app.environment != .testing {
+    app.gatekeeper.config = .init(maxRequests: 100, per: .minute)
+    app.gatekeeper.config = .init(maxRequests: 20, per: .second)
+    app.middleware.use(GatekeeperMiddleware())
+  }
 
   // Json strategies
   let encoder = JSONEncoder()
@@ -50,11 +53,10 @@ public func configure(_ app: Application) async throws {
   ContentConfiguration.global.use(decoder: decoder, for: .json)
   
   // Migrations
-
-  // Configuration
+  // -- Configuration
   app.migrations.add(ConfigureTimeZone())
 
-  // Tables
+  // -- Tables
   app.migrations.add(CreateCycleColors())
   app.migrations.add(CreateCycleDecorations())
   app.migrations.add(CreateCycleTypes())
@@ -75,7 +77,7 @@ public func configure(_ app: Application) async throws {
   app.migrations.add(CreateForumPostReports())
   app.migrations.add(CreateForumCommentReports())
 
-  // Ownerships & pivots
+  // -- Ownerships & pivots
   app.migrations.add(CreateCycleColorOwnership())
   app.migrations.add(CreateCycleDecorationOwnership())
   app.migrations.add(CreateCycleTypeOwnership())
@@ -89,7 +91,7 @@ public func configure(_ app: Application) async throws {
   app.migrations.add(CreateForumPostFavs())
   app.migrations.add(CreateForumPostLikes())
 
-  // Indexes & events
+  // -- Indexes & events
   app.migrations.add(AddPlacesSpatialIndex())
   app.migrations.add(CreateActivityDistanceTriggers())
   app.migrations.add(CreateForumActivityTriggers())
@@ -97,10 +99,10 @@ public func configure(_ app: Application) async throws {
   app.migrations.add(CreateLocationTriggers())
   app.migrations.add(CreateWeeklyStreakReset())
 
-  // Run migrations (uncomment to run)
+  // -- Run migrations (uncomment to run)
   // try await app.autoMigrate()
   
-  // Revert migrations (uncomment to run)
+  // -- Revert migrations (uncomment to run)
   // try await app.autoRevert()
   
   // Routes
