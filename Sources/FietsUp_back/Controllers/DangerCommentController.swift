@@ -136,7 +136,7 @@ struct DangerCommentController: RouteCollection {
     let commentID = try req.parameters.require("dangerCommentID", as: UUID.self)
     let comment = try await findDangerComment(id: commentID, on: req.db)
     
-    try PatchDangerPostDTO.validate(content: req)
+    try PatchDangerCommentDTO.validate(content: req)
     let dto = try req.content.decode(PatchDangerCommentDTO.self)
     comment.patch(with: dto)
     try await comment.save(on: req.db)

@@ -37,7 +37,7 @@ struct PlaceController: RouteCollection {
         summary: "Create batch",
         description: "Create several places at once",
         body: .type([CreatePlaceDTO].self),
-        response: .type([GetPlaceCategoryDTO].self)
+        response: .type([GetPlaceWithRatingDTO].self)
       )
     
     userProtected.post(":placeID", "rating", use: self.rate)

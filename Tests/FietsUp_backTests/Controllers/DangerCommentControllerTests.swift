@@ -203,6 +203,26 @@ extension DatabaseTests {
       }
     }
 
+    @Test("Patching a danger comment ignores fields that belong to posts")
+    func patchIgnoresPostFields() async throws {
+      try await withAppIncludingDB { app in
+        let moderator = try await makeUser(adminRights: 1, on: app.db)
+        let comment = try await makeDangerComment(content: "Original", by: moderator, on: try await makePost(by: moderator, on: app.db), on: app.db)
+
+        try await app.testing().test(
+          .PATCH, "dangers/comments/\(comment.requireID())",
+          beforeRequest: { req in
+            try authorize(&req, as: moderator)
+            req.headers.contentType = .json
+            req.body = ByteBuffer(string: #"{"content": "Edited", "latitude": 91}"#)
+          },
+          afterResponse: { res async throws in
+            #expect(res.status == .ok)
+            #expect(try await DangerComment.find(comment.id, on: app.db)?.content == "Edited")
+          })
+      }
+    }
+
     @Test("Patching my own danger comment as a regular user is forbidden")
     func patchAsAuthor() async throws {
       try await withAppIncludingDB { app in

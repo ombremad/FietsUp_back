@@ -55,6 +55,26 @@ extension DatabaseTests {
       }
     }
 
+    @Test("Reporting with details longer than 10000 characters fails validation")
+    func createDetailsTooLong() async throws {
+      try await withAppIncludingDB { app in
+        let user = try await makeUser(on: app.db)
+        let target = try await makeTarget(by: user, on: app.db)
+        let category = try await makeModerationCategory(on: app.db)
+
+        try await app.testing().test(
+          .POST, "reports/dangers/posts/\(target.requireID())",
+          beforeRequest: { req in
+            try authorize(&req, as: user)
+            try req.content.encode(CreateReportDTO(details: String(repeating: "a", count: 10_001), categoryId: category.requireID()))
+          },
+          afterResponse: { res async throws in
+            #expect(res.status == .badRequest)
+            #expect(try await DangerPostReport.query(on: app.db).count() == 0)
+          })
+      }
+    }
+
     @Test("Reporting an unknown item returns 404")
     func createUnknownTarget() async throws {
       try await withAppIncludingDB { app in
