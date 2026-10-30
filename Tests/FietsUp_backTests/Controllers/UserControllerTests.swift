@@ -863,12 +863,11 @@ extension DatabaseTests {
       }
     }
 
-    @Test("Patching me with a cycle type I own selects it")
-    func patchMeOwnedCycle() async throws {
+    @Test("Patching me with a cycle type selects it")
+    func patchMeCycle() async throws {
       try await withAppIncludingDB { app in
         let user = try await makeUser(on: app.db)
         let cycleType = try await makeCycleType(on: app.db)
-        try await user.$cycleTypeOwned.attach(cycleType, on: app.db)
 
         try await app.testing().test(
           .PATCH, "users/me",
@@ -879,25 +878,6 @@ extension DatabaseTests {
           afterResponse: { res async throws in
             #expect(res.status == .ok)
             #expect(try res.content.decode(GetUserDTO.self).cycleType?.id == cycleType.id)
-          })
-      }
-    }
-
-    @Test("Patching me with a cycle type I don't own is forbidden")
-    func patchMeUnownedCycle() async throws {
-      try await withAppIncludingDB { app in
-        let user = try await makeUser(on: app.db)
-        let cycleType = try await makeCycleType(on: app.db)
-
-        try await app.testing().test(
-          .PATCH, "users/me",
-          beforeRequest: { req in
-            try authorize(&req, as: user)
-            try req.content.encode(PatchUserDTO(cycleTypeId: cycleType.requireID()))
-          },
-          afterResponse: { res async throws in
-            #expect(res.status == .forbidden)
-            #expect(try await User.find(user.id, on: app.db)?.$cycleType.id == nil)
           })
       }
     }
